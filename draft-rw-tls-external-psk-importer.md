@@ -86,29 +86,40 @@ A key importer takes as input an external PSK as defined in Section {{terminolog
 into a set of PSKs for use in a connection based on the supported HashAlgorithms. In particular, it 
 builds an ExternalIdentity into an InternalIdentity as follows:
 
-```
+~~~
    struct {
        opaque external_identity<1...2^16-1>;
        HashAlgorithm hash;
    } imported_identity;
-```
+~~~
 
 Using an ImportedIdentity, and an external PSK epsk, one then derives a concrete PSK for use in TLS
 as follows:
 
-```
+~~~
    epskx = HKDF-Extract(0, epsk)
    PSKx = HKDF-Expand-Label(epskx, "derived psk", Hash(imported_identity), Hash.length)
-```
+~~~
 
 The hash function used for this KDF is that which is associated with the external PSK. It is not bound to 
 the hash function included in the ImportedIdentity.
+
+With knowledge of the supported hash functions, one may also import PSKs before the start of
+a connection. 
 
 # Deprecating Hash Functions
 
 If a client or server wish to deprecate a hash function and no longer use it for TLS, they simply remove this
 hash function from the set of hashes used during the import stage. This does not affect the KDF operation used
 to derive concrete PSKs.
+
+# TLS 1.2 Compatibility
+
+Key importers do not affect TLS 1.2 in any way. Recall that TLS 1.2 permits computing the TLS PRF with
+any hash algorithm and PSK. Thus, a PSK may be used with the same KDF (and underlying HMAC hash) as 
+TLS 1.3 with importers. However, critically, the derived PSK will not be the same since the importer
+differentiates the PSK via the identity and hash function. Thus, TLS 1.3 imported PSKs are distinct
+from those used in TLS 1.2 and the goal of avoiding cross-protocol collisions is achieved.
 
 # Security Considerations
 
