@@ -38,15 +38,16 @@ TLS 1.3.
 
 # Introduction
 
-TLS 1.3 {{!I-D.ietf-tls-tls13}} supports pre-shared key (PSK) resumption, wherein PSKs
+TLS 1.3 {{!RFC8446}} supports pre-shared key (PSK) resumption, wherein PSKs
 can be established via session tickets from prior connections or externally via some out-of-band
 mechanism. The protocol mandates that each PSK only be used with a single hash function.
 This was done to simplify protocol analysis. TLS 1.2, in contrast, has no such requirement, as
 a PSK may be used with any hash algorithm and the TLS 1.2 PRF. This means that external PSKs
 could possibly be re-used in two different contexts with the same hash functions during key
-derivation, which is possibly insecure.
+derivation. Moreover, it requires external PSKs to be provisioned for specific hash
+functions.
 
-To mitigate this problem, external PSKs can be bound to a specific hash function when used
+To mitigate these problems, external PSKs can be bound to a specific hash function when used
 in TLS 1.3, even if they are associated with a different KDF (and hash function) when provisioned. This document
 specifies an interface by which external PSKs may be imported for use in a TLS 1.3 connection
 to achieve this goal. In particular, it describes how KDF-bound PSKs can be differentiated by
@@ -103,10 +104,10 @@ A unique and imported PSK (IPSK) with base key 'ipskx' bound to this identity is
    ipskx = HKDF-Expand-Label(epskx, "derived psk", Hash(ImportedIdentity), Hash.length)
 ~~~
 
-The hash function used for this KDF is that which is associated with the external PSK. It is not
+The hash function used for HKDF {{!RFC5869}} is that which is associated with the external PSK. It is not
 bound to ImportedIdentity.hash. If no hash function is specified, SHA-256 MUST be used.
 
-The resulting IPSK base key 'ipskx' is then used as a PSK in TLS 1.3 with identity ImportedIdentity.
+The resulting IPSK base key 'ipskx' is then used as the binder key in TLS 1.3 with identity ImportedIdentity.
 
 With knowledge of the supported hash functions, one may import PSKs before the start of
 a connection.
