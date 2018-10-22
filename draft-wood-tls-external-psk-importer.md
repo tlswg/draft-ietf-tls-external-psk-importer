@@ -112,6 +112,10 @@ The resulting IPSK base key 'ipskx' is then used as the binder key in TLS 1.3 wi
 With knowledge of the supported hash functions, one may import PSKs before the start of
 a connection.
 
+EPSKs may be imported for early data use if they are bound to protocol settings and configurations that would
+otherwise be required for early data with normal (ticket-based PSK) resumption. Minimally, that means ALPN,
+QUIC transport settings, etc., must be provisioned alongside these EPSKs.
+
 # Deprecating Hash Functions
 
 If a client or server wish to deprecate a hash function and no longer use it for TLS 1.3, they may remove this
