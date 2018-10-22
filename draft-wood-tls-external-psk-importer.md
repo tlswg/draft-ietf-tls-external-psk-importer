@@ -142,5 +142,5 @@ This document has no IANA requirements.
 
 # Acknowledgements
 
-The authors thank David Benjamin and Eric Rescorla for discussions that led to the production of this document.
+The authors thank David Benjamin, Eric Rescorla, and Martin Thomson for discussions that led to the production of this document.
 
