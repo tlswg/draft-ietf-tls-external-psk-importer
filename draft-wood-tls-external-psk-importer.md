@@ -100,7 +100,7 @@ supported HashAlgorithm 'hash', the importer constructs an ImportedIdentity stru
    } ImportedIdentity;
 ~~~
 
-[[TODO: An alternative deisgn might combine label and hash into the same field so that future
+[[TODO: An alternative design might combine label and hash into the same field so that future
 protocols which don't have a notion of HashAlgorithm don't need this field.]]
 
 ImportedIdentity.label MUST be bound to the protocol for which the key is imported. Thus,
@@ -113,11 +113,10 @@ A unique and imported PSK (IPSK) with base key 'ipskx' bound to this identity is
 ~~~
    epskx = HKDF-Extract(0, epsk)
    ipskx = HKDF-Expand-Label(epskx, "derived psk",
-                             Hash(ImportedIdentity), CipherSuite.length)
+                             Hash(ImportedIdentity), Hash.length)
 ~~~
 
-CipherSuite.length is the length of the key necessary for the corresponding ciphersuite. For TLS 1.3,
-CipherSuite.length = Hash.length.
+[[TODO: The length of ipskx MUST match that of the corresponding and supported ciphersuites.]]
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the external PSK. It is not
 bound to ImportedIdentity.hash. If no hash function is specified, SHA-256 MUST be used.
