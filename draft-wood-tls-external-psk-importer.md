@@ -100,25 +100,33 @@ supported HashAlgorithm 'hash', the importer constructs an ImportedIdentity stru
    } ImportedIdentity;
 ~~~
 
-ImportedIdentity.label SHOULD be bound to the protocol for which the key is imported. For example,
-TLS 1.3 over TCP should use "tls13" as the label, whereas QUIC {{!I-D.ietf-quic-transport}} should use
-"quicv1" as the label. Note that this means future versions of TLS will increase the number of
-PSKs derived from an external PSK.
+[[TODO: An alternative deisgn might combine label and hash into the same field so that future
+protocols which don't have a notion of HashAlgorithm don't need this field.]]
+
+ImportedIdentity.label MUST be bound to the protocol for which the key is imported. Thus,
+TLS 1.3 and QUICv1 {{!I-D.ietf-quic-transport}} MUST use "tls13" as the label. Similarly, TLS 1.2 and 
+all prior TLS versions should use "tls12" as ImportedIdentity.label, as well as SHA256 as ImportedIdentity.hash.
+Note that this means future versions of TLS will increase the number of PSKs derived from an external PSK.
 
 A unique and imported PSK (IPSK) with base key 'ipskx' bound to this identity is then computed as follows:
 
 ~~~
    epskx = HKDF-Extract(0, epsk)
    ipskx = HKDF-Expand-Label(epskx, "derived psk",
-                             Hash(ImportedIdentity), Hash.length)
+                             Hash(ImportedIdentity), CipherSuite.length)
 ~~~
+
+CipherSuite.length is the length of the key necessary for the corresponding ciphersuite. For TLS 1.3,
+CipherSuite.length = Hash.length.
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the external PSK. It is not
 bound to ImportedIdentity.hash. If no hash function is specified, SHA-256 MUST be used.
 Differentiating epsk by ImportedIdentity.hash ensures that each imported PSK is only used with at most one
-hash function, thus satisfying the requirements in {{!RFC8446}}. Endpoints MUST import and derive an
-ipsk for each ciphersuite they support. For example, importing a key for TLS_AES_128_GCM_SHA256 and
-TLS_AES_256_GCM_SHA384 would yield two PSKs, one for SHA256 and another for SHA384.
+hash function, thus satisfying the requirements in {{!RFC8446}}. Endpoints MUST import and derive an ipsk 
+for each hash function used by each ciphersuite they support. For example, importing a key for 
+TLS_AES_128_GCM_SHA256 and TLS_AES_256_GCM_SHA384 would yield two PSKs, one for SHA256 and another 
+for SHA384. In contrast, if TLS_AES_128_GCM_SHA256 and TLS_CHACHA20_POLY1305_SHA256 are supported,
+only one derived key is necessary. 
 
 The resulting IPSK base key 'ipskx' is then used as the binder key in TLS 1.3 with identity
 ImportedIdentity. With knowledge of the supported hash functions, one may import PSKs before
@@ -134,17 +142,14 @@ If a client or server wish to deprecate a hash function and no longer use it for
 hash function from the set of hashes used during while importing keys. This does not affect the KDF operation
 used to derive concrete PSKs.
 
-# TLS 1.2 Compatibility
+# Backwards Compatibility
 
-As specified, key importers do not affect TLS 1.2. Recall that TLS 1.2 permits computing the TLS PRF
-with any hash algorithm and PSK. Thus, an external PSK may be used with the same KDF (and underlying
+Recall that TLS 1.2 permits computing the TLS PRF with any hash algorithm and PSK. 
+Thus, an external PSK may be used with the same KDF (and underlying
 HMAC hash algorithm) as TLS 1.3 with importers. However, critically, the derived PSK will not
 be the same since the importer differentiates the PSK via the identity and hash function. Thus,
-TLS 1.3 imported PSKs are distinct from those used in TLS 1.2 and avoid cross-protocol collisions.
-
-However, as an added defense, keys imported for an endpoint that supports TLS 1.2 and 1.3 SHOULD
-derive a PSK specific to TLS 1.2 by using "tls12" as ImportedIdentity.label and SHA256 as
-ImportedIdentity.hash. The hint for this imported PSK is not modified.
+PSKs imported for TLS 1.3 are distinct from those used in TLS 1.2, and thereby avoid 
+cross-protocol collisions.
 
 # Security Considerations
 
@@ -152,11 +157,14 @@ This is a WIP draft and has not yet seen significant security analysis.
 
 # Privacy Considerations
 
+DISCLAIMER: This section contains a sketch of a design for protecting external PSK identities.
+It is not meant to be implementable as written.
+
 External PSK identities are typically static by design so that endpoints may use them to
 lookup keying material. For some systems and use cases, this identity may become a persistent
 tracking identifier. One mitigation to this problem is encryption. Future drafts may specify
 a way for encrypting PSK identities using a mechanism similar to that of the Encrypted
-SNI protposal {{?I-D.ietf-tls-esni}}. Another approach is to replace the identity with an
+SNI proposal {{?I-D.ietf-tls-esni}}. Another approach is to replace the identity with an
 unpredictable or "obfuscated" value derived from the corresponding PSK. One such proposal, derived
 from a design outlined in {{?I-D.ietf-dnssd-privacy}}, is as follows. Let ipskx be the imported
 PSK with identity ImportedIdentity, and N be a unique nonce of length equal to that of ImportedIdentity.hash.
