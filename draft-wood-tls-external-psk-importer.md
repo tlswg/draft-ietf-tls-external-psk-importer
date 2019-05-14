@@ -76,7 +76,7 @@ differentiate an external PSK into one or more PSKs for use.
 Imported keys do not require negotiation for use, as a client and server will not agree upon
 identities if not imported correctly. Thus, importers induce no protocol changes with
 the exception of expanding the set of PSK identities sent on the wire. Endpoints may incrementally
-deploy PSK importer support by offer non-imported keys for TLS versions prior to TLS 1.3.
+deploy PSK importer support by offering non-imported keys for TLS versions prior to TLS 1.3.
 (Negotiation and use of imported PSKs requires both endpoints support the importer API described herein.)
 
 ## Terminology {#terminology}
