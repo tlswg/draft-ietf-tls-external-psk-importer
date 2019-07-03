@@ -19,22 +19,35 @@ author:
        organization: Google, LLC.
        email: davidben@google.com
  -
-       ins: C. A. Wood
-       name: Christopher A. Wood
-       organization: Apple, Inc.
-       email: cawood@apple.com
- -
        ins: J. G. Hoyland
        name: Jonathan G. Hoyland
        organization: Cloudflare, Inc.
        email: jhoyland@cloudflare.com
+ -
+       ins: C. A. Wood
+       name: Christopher A. Wood
+       organization: Apple, Inc.
+       email: cawood@apple.com
 
 normative:
   RFC1035:
   RFC2119:
   RFC6234:
 
+
 informative:
+    CCB: DOI.10.14722/ndss.2015.23277
+    Selfie:
+        title: "Selfie: reflections on TLS 1.3 with PSK"
+        author:
+            -
+                ins: N. Drucker
+                name: Nir Drucker
+            -
+                ins: S. Gueron
+                name: Shay Gueron
+        date: 2019
+        target: https://eprint.iacr.org/2019/347.pdf
 
 --- abstract
 
@@ -48,15 +61,16 @@ TLS 1.3.
 TLS 1.3 supports PSK-based handshakes, wherein PSKs can be established either via session tickets from prior TLS connections or via an out-of-band mechanism.
 TLS 1.3 mandates that each PSK be associated with a single hash function.
 This makes it easier for formal analysis to exclude cross-protocol attacks where the same key is used in multiple different contexts.
-TLS 1.2 also supports PSK-based handshakes, but does not require they be provisioned with a single hash function, any PSK may be used with any supported hash function and the TLS 1.2 PRF.
+TLS 1.2 also supports PSK-based handshakes, but does not require they be provisioned with a single hash function.
+Any PSK may be used with any supported hash function and the TLS 1.2 PRF.
 This means that PSKs can be used in different contexts within TLS 1.2, and further can be used in TLS 1.2 and TLS 1.3 with the same hash function.
 Therefore a server that accepts both TLS 1.2 and TLS 1.3 PSK handshakes with the same PSK could potentially be vulnerable to cross-protocol attacks.
 
 This draft describes a method for processing PSKs such that they can be securely used with both TLS 1.2 and TLS 1.3.
-The design is such that it also allows for a PSK to be imported into TLS 1.3 with any supported hash function.
-PSKs provisioned with one hash function can be processed to produce a set of candidate PSKs, each of which is bound to a, potentially different, specific hash function.
+The design allows for a PSK to be imported into TLS 1.3 with any supported hash function.
+PSKs provisioned with one hash function can be processed to produce a set of candidate PSKs, each of which is bound to a potentially different and specific hash function.
 This expands what would normally have been a single PSK identity into a set of PSK identities.
-Notably, this requires no change to the TLS 1.3 key schedule.
+Notably, this makes no wire format changes and requires no change to the TLS 1.3 key schedule.
 
 
 # Conventions and Definitions
@@ -76,7 +90,7 @@ differentiate an external PSK into one or more PSKs for use.
 The goal of both key exporters and key importers is to produce a unique channel binding that ensures that both parties agree on all relevant context.
 
 Imported keys do not require negotiation for use, as a client and server will not agree upon
-identities if not imported correctly unless the adversary is able to choose the OOB PSK for one of the parties.
+identities if not imported correctly unless the adversary is able to choose the out-of-band (OOB) PSK for one of the parties.
 Thus, importers induce no protocol changes with
 the exception of expanding the set of PSK identities sent on the wire. Endpoints may incrementally
 deploy PSK importer support by offering non-imported keys for TLS versions prior to TLS 1.3.
@@ -126,6 +140,12 @@ The `Context` in this case includes the `ImportedIdentity` plus any necessary ad
 
 ~~~
   struct {
+    opaque channel_binding<1..2^16>;
+    opaque secrets<0..2^16>;
+  } PriorContext
+~~~
+~~~
+  struct {
       ImportedIdentity imported_psk;
       opaque client_id<0..2^16>;
       PriorContext prior_contexts<0..2^16>;
@@ -135,20 +155,25 @@ The `Context` in this case includes the `ImportedIdentity` plus any necessary ad
 The `client_id` is an optional field that is required to be unique for each actor that knows the the EPSK.
 This is to prevent Selfie-style reflections.
 This is only necessary in scenarios where more than two actors use the same key, including the case where a single agent will complete PSK handshakes as both the client and the server using the same key.
+The Selfie attack {{!Selfie}} abuses an underlying assumption of TLS, that only one client and one server know a PSK.
+A pair of agents that both act as both client *and* server, and use the same PSK in both roles violate this assumption.
+There are two clients and two servers that know the PSK.
+The agents are thus both vulnerable to reflection attacks where the attacker forces the agent to act as both client and server in a single connection.
+This is because neither agent can distinguish between itself and its peer.
+By hashing a distinguishing value into PSK binder, a server that recieved a reflected `ClientHello` would be unable to verify the binder, and would reject the connection.
 
-~~~
-  struct {
-    opaque channel_binding<1..2^16>;
-    opaque secrets<0..2^16>;
-  } PriorContexts
+For example a distinguishing string for IoT devices could be a MAC address, and for VMs it could be a namespace.
+The decision to use this field, and what it should contain must be agreed OOB.
+N.B. this value is never sent on the wire, as this would identify the client even to passive adverseries.
 
-~~~
 
 `prior_contexts` is a list of prior security contexts, consisting of channel bindings and any associated keys.
 In the standard case this list will be empty, as the TLS connection is not wrapped in a prior security context.
 However if the OOB PSK was established through a protocol, or series of protocols, that provide a continuing security context, then including the channel binding for these contexts, as well as any keys established, binds the security contexts together.
 This makes it easier to reason formally about the exact properties are provided by the combined series of protocols.
-
+For example consider chaining together two TLS sessions, but using OOB PSK importers rather than resumption.
+One could then include the prior context `<exporter_key, master_secret>`, where `exporter key` is computed using the exporter interface and a label that uniquely defines this particular setup.
+This allows reasoning about the security contexts of both sessions at once.
 
 [[TODO: The length of ipskx MUST match that of the corresponding and supported ciphersuites.]]
 
@@ -175,9 +200,9 @@ For clarity, the following table specifies PSK importer labels for varying insta
 
 | Protocol   | Label   |
 |:----------:|:-------:|
-| TLS 1.3 {{RFC8446}} | "tls13" |
-| QUICv1 {{I-D.ietf-quic-transport}} | "tls13" |
-| TLS 1.2 {{RFC5246}} | "tls12" |
+| TLS 1.3 {{!RFC8446}} | "tls13" |
+| QUICv1 {{!I-D.ietf-quic-transport}} | "tls13" |
+| TLS 1.2 {{!RFC5246}} | "tls12" |
 | DTLS 1.2 {{!RFC6347}} | "dtls12" |
 | DTLS 1.3 {{!I-D.ietf-tls-dtls13}} | "dtls13" |
 
