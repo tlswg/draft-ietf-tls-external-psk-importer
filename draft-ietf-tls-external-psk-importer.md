@@ -186,6 +186,9 @@ A pair of agents that both act as both client *and* server, and use the same PSK
 In this case, there are two clients and two servers that know the PSK, since each endpoint acts as both client and server.
 The agents are thus both vulnerable to reflection attacks where the attacker forces the agent to act as both client and server in a single connection.
 This is because neither agent can distinguish between itself and its peer.
+Recall both servers have the exact same configuration.
+Therefore even though the session specific parameters change for each session, the client cannot distinguish between a response reflected back on it by the attacker and an honest response from its peer.
+For each parameter, both servers either return the value for every session, or they return a different value for every session.
 By hashing a distinguishing `client_id` value into the PSK binder, a server that received a reflected `ClientHello` would be unable to verify the binder, and would reject the connection.
 
 For example, distinguishing strings for agents in peer-to-peer IoT device deployments could be a MAC address.
