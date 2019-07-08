@@ -153,11 +153,11 @@ The `Context` in this case includes the `ImportedIdentity` plus any necessary ad
   } Context;
 ~~~
 
-The `client_id` is an optional field that is required to be unique for each actor that knows the EPSK.
+Context.client_id is an optional field that is required to be unique for each actor that knows the EPSK.
 See section {{client-id-description}} for more details.
 
-`prior_contexts` is a list of prior security contexts, consisting of channel bindings and any associated keys.
-See section {{prior-contexts-description}} for more details.
+Context.prior_contexts is a list of prior security contexts, consisting of channel bindings and 
+any associated keys. See section {{prior-contexts-description}} for more details.
 
 [[TODO: The length of ipskx MUST match that of the corresponding and supported ciphersuites.]]
 
@@ -178,29 +178,33 @@ EPSKs may be imported for early data use if they are bound to protocol settings 
 otherwise be required for early data with normal (ticket-based PSK) resumption. Minimally, that means ALPN,
 QUIC transport settings, etc., must be provisioned alongside these EPSKs.
 
-##Client ID {#client-id-description}
-The `client_id` is an optional field.
-If used, the `client_id` MUST be unique for each actor that knows the EPSK.
-This is to prevent Selfie-style reflections {{Selfie}}.
+## Client ID {#client-id-description}
+
+The `client_id` is an optional field. If used, the `client_id` MUST be unique 
+for each actor that knows the EPSK. This is to prevent Selfie-style reflections {{Selfie}}.
 If two actors have the same `client_id` this defense may not be effective.
-This field is only necessary in scenarios where more than two actors use the same PSK, including the case where a single agent will complete PSK handshakes as both the client and the server using the same key.
-For a more in-depth description see {{selfie-style-reflections}}.
+This field is only necessary in scenarios where more than two actors 
+use the same PSK, including the case where a single agent will complete 
+PSK handshakes as both the client and the server using the same key.
+See {{selfie-style-reflections}} for more details about this attack.
 
 For example, a unique `client_id` for agents in peer-to-peer IoT device deployments could be a MAC address.
 Similarly, a unique `client_id` for agents in mesh VM deployments could be a namespace.
 The decision to use this field and what it should contain MUST be agreed OOB.
-Note that, critically, the TLS protocol never sends `client_id` on the wire, as this would identify the client even to passive adverseries.
+Note that, critically, the TLS protocol never sends `client_id` on the wire, 
+as this would identify the client even to passive adverseries.
 
-##Prior Contexts {#prior-contexts-description}
+## Prior Contexts {#prior-contexts-description}
+
 In the standard case this list will be empty because the TLS connection will not be wrapped in a prior security context.
 However, if the OOB PSK was established through a protocol, or series of protocols, that provide a continuing security context, then including the channel binding for these contexts, as well as any keys established, binds the security contexts together.
 This makes it easier to reason formally about the exact properties are provided by the combined series of protocols.
 
 For the purposes of retaining keys the sequence of protocols should be regarded as a series of nested sessions.
 It is not generally considered best practice to maintain keys beyond the lifetime of a session.
-In this case, because we want to establish a combined security context it is required that the secrets established in all previous sessions be included in all later ones.
-In particular this is required to provide compound authentication {{CCB}}.
+In this case, because we want to establish a combined security context it is required that the secrets established in all previous sessions be included in all later ones. In particular this is required to provide compound authentication {{CCB}}.
 Simply including channel bindings is insufficient, because, per {{!RFC5056}}, revealing a channel binding to an attacker must not weaken the scheme.
+
 To satisfy the requirements:
 
   1. that keys not be retained longer than necessary, and
@@ -211,14 +215,20 @@ implementers using this field:
   1. SHOULD establish all prior contexts in reasonably short order, and
   2. SHOULD, once the final security context has been established, delete ephemeral keys as appropriate.
 
-##Example
-As an example, consider chaining together two TLS sessions using OOB PSK importers rather than resumption.
-One could then include the prior context `<tls_channel_binding, master_secret>` in the second connection, where `tls_channel_binding` is computed by calling the TLS exporter interface of the first connection with a label that uniquely defines this particular setup.
+### Example
 
-Including this channel binding in the prior contexts binds the security context of the first channel to the security context of the second channel.
-This allows reasoning about the security contexts of both sessions at once.
-For example this pattern might be useful if the security of the second channel's PSK is in doubt, as an attacker would need to compromise both the first channel and the second channel to mount a successful attack.
-[[This is simply an illustrative sketch and has not seen any security analysis.]]
+As an example, consider chaining together two TLS sessions using OOB PSK importers rather than resumption.
+One could then include the prior context `<tls_channel_binding, master_secret>` in the second connection, 
+where `tls_channel_binding` is computed by calling the TLS exporter interface of the first connection with 
+a label that uniquely defines this particular setup.
+
+Including this channel binding in the prior contexts binds the security context of the first channel 
+to the security context of the second channel. This allows reasoning about the security contexts of 
+both sessions at once. For example this pattern might be useful if the security of the second channel's 
+PSK is in doubt, as an attacker would need to compromise both the first channel and the second channel 
+to mount a successful attack.
+
+[[NOTE: This is simply an illustrative sketch and has not seen any security analysis.]]
 
 # Label Values
 
@@ -295,22 +305,21 @@ The authors thank Eric Rescorla and Martin Thomson for discussions that led to t
 as well as Christian Huitema for input regarding privacy considerations of external PSKs. John Mattsson
 provided input regarding PSK importer deployment considerations.
 
-#Selfie-style Reflections {#selfie-style-reflections}
+# Selfie-style Reflections {#selfie-style-reflections}
 The Selfie attack abuses an underlying assumption of TLS, i.e. that only one client and one server know a given PSK.
 A pair of agents that both act as both client and server, and use the same PSK in both roles violate this assumption.
 In this case, there are two clients and two servers that know the PSK, since each endpoint acts as both client and server.
 
 The agents are thus both vulnerable to reflection attacks where the attacker reflects all handshake messages back on the agent.
 This forces the agent to act as both client and server in a single connection.
-Because both clients have identical configurations, an agent acting as a server can't distinguish between its peer acting as a client, and itself acting as a client.
-Adding a role-based label is ineffective, as both the agent and its peer will add the `client` label when acting as a client, leaving them indistinguishable.
-
-Broadly speaking, there are two types of parameters in the TLS handshake, those which are constant between sessions, and those which change with every session.
-Only parameters that are constant between sessions can be used to 'fingerprint' peers, however, if two agents have the same configuration, they will have the same 'fingerprint'.
-Whilst a role-based label is constant between sessions, it doesn't break the symmetry of the configurations.
+Because both clients have identical configurations, an agent acting as a server cannot 
+distinguish between its peer acting as a client, and itself acting as a client.
+Adding a role-based label is ineffective, as both the agent and its peer will add 
+the `client` label when acting as a client, leaving them indistinguishable.
 
 The `client_id` is both constant between sessions, and different for each agent.
-The `client_id` is included in the computation of `ipskx`, and therefore is included in the computation of the PSK binder.
-A server that received a reflected `ClientHello` would try and compute the binder using the `client_id` of its peer, and thus would be unable to verify the binder.
-The server would therefore reject the connection.
-This specifically breaks the symmetry of the configurations such that agents are distinguishable.
+The `client_id` is included in the computation of `ipskx`, and therefore is included in 
+the computation of the PSK binder. A server that received a reflected `ClientHello` would 
+try and compute the binder using the `client_id` of its peer, and thus would be unable to verify the binder.
+The server would therefore reject the connection. This specifically breaks the symmetry of 
+the configurations such that agents are distinguishable.
