@@ -88,6 +88,40 @@ a tuple of (Base Key, External Identity, KDF). The associated KDF (and hash func
 - External Identity: The identity of an EPSK.
 - Imported Identity: The identity of a PSK as sent on the wire.
 
+# Binder Key
+To prevent PSK Importers from being confused with standard OOB PSKs we change the label used in the computation of the PSK binder key.
+In TLS 1.3 the PSK binder key computation is defined as follows:
+
+~~~
+             0
+             |
+             v
+   PSK ->  HKDF-Extract = Early Secret
+             |
+             +-----> Derive-Secret(., "ext binder" | "res binder", "")
+             |                     = binder_key
+~~~
+
+We replace the string "ext binder" with "imp binder".
+This means the binder key is now computed as follows:
+
+~~~
+             0
+             |
+             v
+   PSK ->  HKDF-Extract = Early Secret
+             |
+             +-----> Derive-Secret(., "ext binder"
+             |                      | "res binder"
+             |                      | "imp binder", "")
+             |                     = binder_key
+~~~
+
+This change should not affect any of the security properties or security proofs previously established.
+The only change that is not a previously valid TLS 1.3 trace in the change to the `binder_key` computation.
+Adding label differentiation prevents collisions with non-imported external keys, because using a disjoint contexts in an HKDF to one disjoint ensures key separation.
+The `binder_key` is a leaf key, and thus changing its computation doesn't affect any other key.
+
 # Key Import
 
 A key importer takes as input an EPSK with external identity 'external_identity' and base key 'epsk',
