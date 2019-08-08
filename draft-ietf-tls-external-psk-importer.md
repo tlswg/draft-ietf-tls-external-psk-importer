@@ -100,7 +100,7 @@ structure as follows:
    struct {
        opaque external_identity<1...2^16-1>;
        opaque label<0..2^8-1>;
-       opaque CTXInfo<0..2^16-1>;
+       opaque context<0..2^16-1>;
        HashAlgorithm hash;
    } ImportedIdentity;
 ~~~
@@ -113,9 +113,9 @@ TLS 1.3 and QUICv1 {{!I-D.ietf-quic-transport}} MUST use "tls13" as the label. S
 all prior TLS versions should use "tls12" as ImportedIdentity.label, as well as SHA256 as ImportedIdentity.hash.
 Note that this means future versions of TLS will increase the number of PSKs derived from an external PSK.
 
-ImportedIdentity.CTXInfo MUST include the context used to derive the EPSK, if any exists.  If the EPSK is a key derived
-from some other protocol or sequence of protocols CTXInfo MUST include a channel binding for the deriving protocols
-{{!RFC5056}}.  If any secrets are agreed in earlier protocols they SHOULD be included in the CTXInfo [CCB].
+ImportedIdentity.context MUST include the context used to derive the EPSK, if any exists.  If the EPSK is a key derived
+from some other protocol or sequence of protocols, ImportedIdentity.context MUST include a channel binding for the deriving protocols
+{{!RFC5056}}.  If any secrets are agreed in earlier protocols they SHOULD be included in ImportedIdentity.context [CCB].
 
 A unique and imported PSK (IPSK) with base key 'ipskx' bound to this identity is then computed as follows:
 
