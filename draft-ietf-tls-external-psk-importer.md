@@ -32,6 +32,17 @@ normative:
 
 informative:
   CCB: DOI.10.14722/ndss.2015.23277
+  Selfie:
+      title: "Selfie: reflections on TLS 1.3 with PSK"
+      author:
+          -
+              ins: N. Drucker
+              name: Nir Drucker
+          -
+              ins: S. Gueron
+              name: Shay Gueron
+      date: 2019
+      target: https://eprint.iacr.org/2019/347.pdf
 
 --- abstract
 
@@ -253,3 +264,18 @@ The authors thank Eric Rescorla and Martin Thomson for discussions that led to t
 as well as Christian Huitema for input regarding privacy considerations of external PSKs. John Mattsson
 provided input regarding PSK importer deployment considerations.
 
+# Thwarting Selfie
+
+The Selfie attack [Selfie] relies on a misuse of the PSK interface.  The PSK interface makes the implicit assumption
+that each PSK is known only to one client and one server.  If this assumption is violated, as in the Selfie case where
+the PSK is known to two clients and two servers, then the implicit authentication of the PSK is broken.  If two distinct
+servers have the same key then they are indistinguishable to the client, and vice versa.  To avoid this difficulty you
+can use imported PSKs with extra context that distiguishes the various actors.  As long as all distinct clients and all
+distinct servers use unique contexts the Imported PSKs they produce will be cryptographically independent.
+
+For example in the Selfie scenario if all actors include their MAC address in the `ImportedIdentity.context` field the
+Selfie attack is thwarted.  The PSK binder in the reflected `ClientHello` would fail to validate because the server
+would include the expected client's MAC address and not its own, and thus the handshake would fail.  The appropriate
+context to use is situation dependent, for example virtual machines might not have unique MAC addresses, and thus
+namespaces might be a better choice.  Any information that is guaranteed to be unique across all distinct servers and
+all distinct clients defeats this attack.
