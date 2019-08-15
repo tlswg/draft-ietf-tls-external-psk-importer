@@ -32,6 +32,17 @@ normative:
 
 informative:
   CCB: DOI.10.14722/ndss.2015.23277
+  Selfie:
+     title: "Selfie: reflections on TLS 1.3 with PSK"
+     author:
+         -
+             ins: N. Drucker
+             name: Nir Drucker
+         -
+             ins: S. Gueron
+             name: Shay Gueron
+     date: 2019
+     target: https://eprint.iacr.org/2019/347.pdf
 
 --- abstract
 
@@ -219,3 +230,32 @@ The authors thank Eric Rescorla and Martin Thomson for discussions that led to t
 as well as Christian Huitema for input regarding privacy considerations of external PSKs. John Mattsson
 provided input regarding PSK importer deployment considerations.
 
+# Addressing Selfie
+
+The Selfie attack {{Selfie}} relies on a misuse of the PSK interface.
+The PSK interface makes the implicit assumption that each PSK
+is known only to one client and one server. If multiple clients or
+multiple servers with distinct roles share a PSK, TLS only
+authenticates the entire group. A node successfully authenticates
+its peer as being in the group whether the peer is another node or itself.
+
+Applications which require authenticating finer-grained roles while still
+configuring a single shared PSK across all nodes can resolve this
+mismatch either by exchanging roles over the TLS connection after
+the handshake or by incorporating the roles of both the client and server
+into the imported PSK context string. For instance, if an application
+identifies each node by MAC address, it could use the following context string.
+
+~~~
+  struct {
+    opaque client_mac<0..2^16-1>;
+    opaque server_mac<0..2^16-1>;
+  } Context;
+~~~
+
+If an attacker then redirects a ClientHello intended for one node to a different
+node, the receiver will compute a different context string and the handshake
+will not complete.
+
+Note that, in this scenario, there is still a single shared PSK across all nodes,
+so each node must be trusted not to impersonate another node's role.
