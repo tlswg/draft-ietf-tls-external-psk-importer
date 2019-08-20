@@ -117,9 +117,8 @@ This means the binder key is now computed as follows:
              |                     = binder_key
 ~~~
 
-This change should not affect any of the security properties or security proofs previously established.
 The only change that is not a previously valid TLS 1.3 trace in the change to the `binder_key` computation.
-Adding label differentiation prevents collisions with non-imported external keys, because using a disjoint contexts in an HKDF to one disjoint ensures key separation.
+Adding label differentiation prevents collisions with non-imported external keys, because using disjoint contexts in an HKDF ensures key separation.
 The `binder_key` is a leaf key, and thus changing its computation doesn't affect any other key.
 
 # Key Import
