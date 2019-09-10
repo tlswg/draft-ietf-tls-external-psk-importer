@@ -155,7 +155,7 @@ A unique and imported PSK (IPSK) with base key 'ipskx' bound to this identity is
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the external PSK. It is not
 bound to ImportedIdentity.kdf. If no hash function is specified, SHA-256 MUST be used.
-Differentiating epsk by ImportedIdentity.kdf ensures that each imported PSK is only used with at most one
+Differentiating EPSK by ImportedIdentity.kdf ensures that each imported PSK is only used with at most one
 hash function, since each KDF is associated with one hash function, thereby satisfying the
 requirements in {{!RFC8446}}.
 
