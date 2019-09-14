@@ -110,8 +110,8 @@ structure as follows:
 ~~~
    struct {
        opaque external_identity<1...2^16-1>;
-       opaque label<0..2^8-1>;
        opaque context<0..2^16-1>;
+       uint16 protocol;
        HashAlgorithm hash;
    } ImportedIdentity;
 ~~~
@@ -119,16 +119,16 @@ structure as follows:
 [[TODO: An alternative design might combine label and hash into the same field so that future
 protocols which don't have a notion of HashAlgorithm don't need this field.]]
 
-ImportedIdentity.label MUST be bound to the protocol for which the key is imported. Thus,
-TLS 1.3 and QUICv1 {{!I-D.ietf-quic-transport}} MUST use "tls13" as the label. Similarly, TLS 1.2 and
-all prior TLS versions should use "tls12" as ImportedIdentity.label, as well as SHA256 as ImportedIdentity.hash.
-Note that this means future versions of TLS will increase the number of PSKs derived from an external PSK.
-
 ImportedIdentity.context MUST include the context used to derive the EPSK, if any exists.  If the EPSK is a key derived
 from some other protocol or sequence of protocols, ImportedIdentity.context MUST include a channel binding for the deriving protocols
 {{!RFC5056}}.  If any secrets are agreed in earlier protocols they SHOULD be included in ImportedIdentity.context [CCB].
 
-A unique and imported PSK (IPSK) with base key 'ipskx' bound to this identity is then computed as follows:
+ImportedIdentity.protocol MUST be the (D)TLS protocol version for which the PSK is being imported.
+For example, TLS 1.3 and QUICv1 {{!I-D.ietf-quic-transport}} MUST use 0x0304, whereas TLS 1.2
+uses 0x0303 and DTLS 1.2 uses 0xFEFD. Note that this means future versions of TLS will increase
+the number of PSKs derived from an external PSK.
+
+An imported PSK (IPSK) with base key 'ipskx' bound to this identity is then computed as follows:
 
 ~~~
    epskx = HKDF-Extract(0, epsk)
@@ -193,30 +193,8 @@ DISCLAIMER: This section contains a sketch of a design for protecting external P
 It is not meant to be implementable as written.
 
 External PSK identities are typically static by design so that endpoints may use them to
-lookup keying material. For some systems and use cases, this identity may become a persistent
-tracking identifier. One mitigation to this problem is encryption. Future drafts may specify
-a way for encrypting PSK identities using a mechanism similar to that of the Encrypted
-SNI proposal {{?I-D.ietf-tls-esni}}. Another approach is to replace the identity with an
-unpredictable or "obfuscated" value derived from the corresponding PSK. One such proposal, derived
-from a design outlined in {{?I-D.ietf-dnssd-privacy}}, is as follows. Let ipskx be the imported
-PSK with identity ImportedIdentity, and N be a unique nonce of length equal to that of ImportedIdentity.hash.
-With these values, construct the following "obfuscated" identity:
-
-~~~
-   struct {
-       opaque nonce[hash.length];
-       opaque obfuscated_identity<1..2^16-1>;
-       HashAlgorithm hash;
-   } ObfuscatedIdentity;
-~~~
-
-ObfuscatedIdentity.nonce carries N, ObfuscatedIdentity.obfuscated_identity carries HMAC(ipskx, N),
-where HMAC is computed with ImportedIdentity.hash, and ObfuscatedIdentity.hash is ImportedIdentity.hash.
-
-Upon receipt of such an obfuscated identity, a peer must lookup the corresponding PSK by exhaustively
-trying to compute ObfuscatedIdentity.obfuscated_identity using ObfuscatedIdentity.nonce and each of its
-known imported PSKs. If N is chosen in a predictable fashion, e.g., as a timestamp, it may be possible
-for peers to precompute these obfuscated identities to ease the burden of trial decryption.
+lookup keying material. However, for some systems and use cases, this identity may become a
+persistent tracking identifier.
 
 # IANA Considerations
 
