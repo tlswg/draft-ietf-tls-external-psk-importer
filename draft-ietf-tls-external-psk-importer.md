@@ -117,8 +117,9 @@ This means the binder key is now computed as follows:
              |                     = binder_key
 ~~~
 
-The only change that is not a previously valid TLS 1.3 trace in the change to the `binder_key` computation.
+The use of a new label means that if one party believes that it is using a standard OOB PSK, but its peer believes it is using this draft then the PSK binders will not match. 
 Adding label differentiation prevents collisions with non-imported external keys, because using disjoint contexts in an HKDF ensures key separation.
+Adding this label creates TLS traces that previously were not valid, which is necessary for keeping the handshake unambiguous.
 The `binder_key` is a leaf key, and thus changing its computation doesn't affect any other key.
 
 # Key Import
