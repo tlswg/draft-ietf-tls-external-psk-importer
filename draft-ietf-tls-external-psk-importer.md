@@ -126,7 +126,10 @@ struct {
 } ImportedIdentity;
 ~~~
 
-The list of KDFID values is maintained by IANA as described in {{IANA}}.
+The list of KDFID values is maintained by IANA as described in {{IANA}}. External PSKs MUST NOT
+be imported for versions of (D)TLS 1.2 or prior versions. See {{rollout}} for discussion on
+how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions co-exist for incremental
+deployment.
 
 ImportedIdentity.context MUST include the context used to derive the EPSK, if any exists.
 If the EPSK is a key derived from some other protocol or sequence of protocols,
@@ -136,8 +139,8 @@ in ImportedIdentity.context {{CCB}}.
 
 ImportedIdentity.target_protocol MUST be the (D)TLS protocol version for which the
 PSK is being imported. For example, TLS 1.3 {{!RFC8446}} and QUICv1 {{!I-D.ietf-quic-transport}}
-MUST use 0x0304, whereas TLS 1.2 uses 0x0303 and DTLS 1.2 uses 0xFEFD. Note that this means
-future versions of TLS will increase the number of PSKs derived from an external PSK.
+MUST use 0x0304. Note that this means future versions of TLS will increase the number of PSKs
+derived from an external PSK.
 
 An imported PSK (IPSK) with base key 'ipskx' bound to this identity is then computed as follows:
 
@@ -168,42 +171,27 @@ EPSKs may be imported for early data use if they are bound to protocol settings 
 otherwise be required for early data with normal (ticket-based PSK) resumption. Minimally, that means ALPN,
 QUIC transport settings, etc., must be provisioned alongside these EPSKs.
 
-# Label Values
-
-For clarity, the following table specifies PSK importer labels for varying instances of the TLS handshake.
-
-| Protocol   | Label   |
-|:----------:|:-------:|
-| TLS 1.3 {{RFC8446}} | "tls13" |
-| QUICv1 {{I-D.ietf-quic-transport}} | "tls13" |
-| TLS 1.2 {{RFC5246}} | "tls12" |
-| DTLS 1.2 {{!RFC6347}} | "dtls12" |
-| DTLS 1.3 {{!I-D.ietf-tls-dtls13}} | "dtls13" |
-
 # Deprecating Hash Functions
 
 If a client or server wish to deprecate a hash function and no longer use it for TLS 1.3,
 they may remove the corresponding KDF from the set of target KDFs used for importing keys.
 This does not affect the KDF operation used to derive concrete PSKs.
 
-# Backwards Compatibility and Incremental Deployment
+# Incremental Deployment {#rollout}
 
 Recall that TLS 1.2 permits computing the TLS PRF with any hash algorithm and PSK.
-Thus, an external PSK may be used with the same KDF (and underlying
-HMAC hash algorithm) as TLS 1.3 with importers. However, critically, the derived PSK will not
-be the same since the importer differentiates the PSK via the identity and hash function. Thus,
+Thus, an external PSK may be used with the same KDF (and underlying HMAC hash algorithm)
+as TLS 1.3 with importers. However, critically, the derived PSK will not be the same since
+the importer differentiates the PSK via the identity, target protocol, and target KDF. Thus,
 PSKs imported for TLS 1.3 are distinct from those used in TLS 1.2, and thereby avoid
 cross-protocol collisions. Note that this does not preclude endpoints from using non-imported
 PSKs for TLS 1.2. Indeed, this is necessary for incremental deployment.
 
 # Security Considerations
 
-This is a WIP draft and has not yet seen significant security analysis.
+DISCLAIMER: This is a WIP draft and has not yet seen significant security analysis.
 
 # Privacy Considerations
-
-DISCLAIMER: This section contains a sketch of a design for protecting external PSK identities.
-It is not meant to be implementable as written.
 
 External PSK identities are typically static by design so that endpoints may use them to
 lookup keying material. However, for some systems and use cases, this identity may become a
@@ -222,12 +210,6 @@ KDFID values:
 | HKDF_SHA256        | {0x00,0x01} |
 |                    |             |
 | HKDF_SHA384        | {0x00,0x02} |
-|                    |             |
-| TLS12_PRF_MD5      | {0x00,0x03} |
-|                    |             |
-| TLS12_PRF_MD5SHA1  | {0x00,0x04} |
-|                    |             |
-| TLS12_PRF_SHA256   | {0x00,0x05} |
 +--------------------+-------------+
 
 New KDFID values are allocated according to the following process:
