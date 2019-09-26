@@ -90,8 +90,8 @@ Imported keys do not require negotiation for use, as a client and server will no
 identities if not imported correctly. Thus, importers induce no protocol changes with
 the exception of expanding the set of PSK identities sent on the wire. Endpoints may
 incrementally deploy PSK importer support by offering non-imported keys for TLS versions
-prior to TLS 1.3. (Negotiation and use of imported PSKs requires both endpoints support
-the importer API described herein.)
+prior to TLS 1.3. Non-imported and imported PSKs are distinct since their identities are
+different on the wire. See {{rollout}} for more details.
 
 Clients which import external keys TLS MUST NOT use these keys for any other purpose.
 Moreover, each external PSK MUST be associated with at most one hash function.
@@ -99,13 +99,14 @@ Moreover, each external PSK MUST be associated with at most one hash function.
 ## Terminology {#terminology}
 
 - External PSK (EPSK): A PSK established or provisioned out-of-band, i.e., not from a TLS
-connection, which is a tuple of (Base Key, External Identity, Hash). The associated hash
-function may be undefined.
+connection, which is a tuple of (Base Key, External Identity, Hash).
 - Base Key: The secret value of an EPSK.
 - External Identity: The identity of an EPSK.
-- Imported Identity: The identity of a PSK as sent on the wire.
 - Target protocol: The protocol for which a PSK is imported for use.
 - Target KDF: The KDF for which a PSK is imported for use.
+- Imported PSK (IPSK): A PSK derived from an EPSK, external identity, optional context string,
+and target protocol and KDF.
+- Imported Identity: The identity of an Imported PSK as sent on the wire.
 
 # Key Import
 
@@ -116,33 +117,33 @@ for each supported target protocol `target_protocol` and KDF `target_kdf`, the i
 an ImportedIdentity structure as follows:
 
 ~~~
-uint8 KDFID[2];
-
 struct {
    opaque external_identity<1...2^16-1>;
    opaque context<0..2^16-1>;
    uint16 target_protocol;
-   KDFID target_kdf;
+   uint16 target_kdf;
 } ImportedIdentity;
 ~~~
 
-The list of KDFID values is maintained by IANA as described in {{IANA}}. External PSKs MUST NOT
+The list of `target_kdf` values is maintained by IANA as described in {{IANA}}. External PSKs MUST NOT
 be imported for versions of (D)TLS 1.2 or prior versions. See {{rollout}} for discussion on
 how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions co-exist for incremental
 deployment.
 
 ImportedIdentity.context MUST include the context used to derive the EPSK, if any exists.
+For example, ImportedIdentity.context may include information about peer roles or identities
+to mitigate Selfie-style reflection attacks. See {{mitigate-selfie}} for more details.
 If the EPSK is a key derived from some other protocol or sequence of protocols,
 ImportedIdentity.context MUST include a channel binding for the deriving protocols
-{{!RFC5056}}.  If any secrets are agreed in earlier protocols they SHOULD be included
-in ImportedIdentity.context {{CCB}}.
+{{!RFC5056}}.
 
 ImportedIdentity.target_protocol MUST be the (D)TLS protocol version for which the
-PSK is being imported. For example, TLS 1.3 {{!RFC8446}} and QUICv1 {{!I-D.ietf-quic-transport}}
-MUST use 0x0304. Note that this means future versions of TLS will increase the number of PSKs
+PSK is being imported. For example, TLS 1.3 {{!RFC8446}} and QUICv1 {{!QUIC=I-D.ietf-quic-transport}}
+use 0x0304. Note that this means future versions of TLS will increase the number of PSKs
 derived from an external PSK.
 
-An imported PSK (IPSK) with base key 'ipskx' bound to this identity is then computed as follows:
+An Imported PSK derived from an EPSK with base key 'epsk' bound to this identity is then
+computed as follows:
 
 ~~~
    epskx = HKDF-Extract(0, epsk)
@@ -150,16 +151,21 @@ An imported PSK (IPSK) with base key 'ipskx' bound to this identity is then comp
                              Hash(ImportedIdentity), L)
 ~~~
 
-L is the length of the hash function associated with ImportedIdentity.target_kdf, as this
-is required for the imported PSK to be of suitable length with compatible ciphersuites.
-The hash function used for HKDF {{!RFC5869}} is that which is associated with the external PSK.
+L is corresponds to the KDF output length of ImportedIdentity.target_kdf as defined in {{IANA}}.
+For hash-based KDFs, such as HKDF_SHA256(0x0001), this is the length of the hash function
+output, i.e., 32 octets. This is required for the IPSK to be of length suitable for supported
+ciphersuites.
+
+The identity of 'ipskx' as sent on the wire is ImportedIdentity.
+
+The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
 It is not the hash function associated with ImportedIdentity.target_kdf. If no hash function
-is specified, SHA-256 MUST be used. Differentiating epsk by ImportedIdentity.target_kdf ensures
-that an imported PSK is only used as input keying material to at most one KDF, thus satisfying
+is specified, SHA-256 MUST be used. Diversifying EPSK by ImportedIdentity.target_kdf ensures
+that an IPSK is only used as input keying material to at most one KDF, thus satisfying
 the requirements in {{!RFC8446}}.
 
-Endpoints MUST import an ipskx for each target KDF they support. For example, importing a key for
-TLS_AES_128_GCM_SHA256 and TLS_AES_256_GCM_SHA384 would yield two PSKs, one for HKDF-SHA256 and
+Endpoints generate a compatible ipskx for each target ciphersuite they offer. For example, importing a
+key for TLS_AES_128_GCM_SHA256 and TLS_AES_256_GCM_SHA384 would yield two PSKs, one for HKDF-SHA256 and
 another for HKDF-SHA384. In contrast, if TLS_AES_128_GCM_SHA256 and TLS_CHACHA20_POLY1305_SHA256
 are supported, only one derived key is necessary.
 
@@ -174,13 +180,13 @@ QUIC transport settings, etc., must be provisioned alongside these EPSKs.
 # Deprecating Hash Functions
 
 If a client or server wish to deprecate a hash function and no longer use it for TLS 1.3,
-they may remove the corresponding KDF from the set of target KDFs used for importing keys.
-This does not affect the KDF operation used to derive concrete PSKs.
+they remove the corresponding KDF from the set of target KDFs used for importing keys.
+This does not affect the KDF operation used to derive Imported PSKs.
 
 # Incremental Deployment {#rollout}
 
 Recall that TLS 1.2 permits computing the TLS PRF with any hash algorithm and PSK.
-Thus, an external PSK may be used with the same KDF (and underlying HMAC hash algorithm)
+Thus, an EPSK may be used with the same KDF (and underlying HMAC hash algorithm)
 as TLS 1.3 with importers. However, critically, the derived PSK will not be the same since
 the importer differentiates the PSK via the identity, target protocol, and target KDF. Thus,
 PSKs imported for TLS 1.3 are distinct from those used in TLS 1.2, and thereby avoid
@@ -200,22 +206,22 @@ persistent tracking identifier.
 # IANA Considerations {#IANA}
 
 This specification introduces a new registry for TLS KDF identifiers and defines the following
-KDFID values:
+target KDF values:
 
-+--------------------+-------------+
-| Description        | Value       |
-+--------------------+-------------+
-| Reserved           | {0x00,0x00} |
-|                    |             |
-| HKDF_SHA256        | {0x00,0x01} |
-|                    |             |
-| HKDF_SHA384        | {0x00,0x02} |
-+--------------------+-------------+
++--------------------+--------+
+| Description        | Value  |
++--------------------+--------+
+| Reserved           | 0x0000 |
+|                    |        |
+| HKDF_SHA256        | 0x0001 |
+|                    |        |
+| HKDF_SHA384        | 0x0002 |
++--------------------+--------+
 
-New KDFID values are allocated according to the following process:
+New target KDF values are allocated according to the following process:
 
-- Values with the first in the range 0-254 (decimal) are assigned via Specification Required {{!RFC8126}}.
-- Values with the first byte 255 (decimal) are reserved for Private Use {{!RFC8126}}.
+- Values in the range 0x0000-0xfeff are assigned via Specification Required {{!RFC8126}}.
+- Values in the range 0xff00-0xffff are reserved for Private Use {{!RFC8126}}.
 
 --- back
 
@@ -226,7 +232,7 @@ production of this document, as well as Christian Huitema for input regarding pr
 considerations of external PSKs. John Mattsson provided input regarding PSK importer
 deployment considerations.
 
-# Addressing Selfie
+# Addressing Selfie {#mitigate-selfie}
 
 The Selfie attack {{Selfie}} relies on a misuse of the PSK interface.
 The PSK interface makes the implicit assumption that each PSK
@@ -239,7 +245,7 @@ Applications which require authenticating finer-grained roles while still
 configuring a single shared PSK across all nodes can resolve this
 mismatch either by exchanging roles over the TLS connection after
 the handshake or by incorporating the roles of both the client and server
-into the imported PSK context string. For instance, if an application
+into the IPSK context string. For instance, if an application
 identifies each node by MAC address, it could use the following context string.
 
 ~~~
