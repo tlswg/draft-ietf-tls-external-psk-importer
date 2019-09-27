@@ -118,8 +118,6 @@ This means the binder key is now computed as follows:
 ~~~
 
 This new label differentiates non-imported and imported external PSKs. Specifically, a client and server will negotiate use of an external PSK if and only if (a) both endpoints import the PSK or (b) neither endpoint imports the PSK.
-Adding label differentiation prevents collisions with non-imported external keys, because using disjoint contexts in an HKDF ensures key separation.
-Adding this label creates TLS traces that previously were not valid, which is necessary for keeping the handshake unambiguous.
 The `binder_key` is a leaf key. Therefore, changing its computation doesn't affect any other key.
 
 # Key Import
