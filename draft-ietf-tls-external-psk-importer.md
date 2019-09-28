@@ -2,7 +2,7 @@
 title: Importing External PSKs for TLS
 abbrev: Importing External PSKs for TLS
 docname: draft-ietf-tls-external-psk-importer-latest
-category: exp
+category: std
 
 ipr: trust200902
 area: General
