@@ -195,7 +195,25 @@ PSKs for TLS 1.2. Indeed, this is necessary for incremental deployment.
 
 # Security Considerations
 
-DISCLAIMER: This is a WIP draft and has not yet seen significant security analysis.
+PSK-based authentication is functionally equivalent to session resumption in that a connection
+uses existing key material to authenticate both endpoints. Following the work of
+{{?BAA15=DOI.10.14722/ndss.2015.23277}}, this is a form of compound authentication. Loosely
+speaking, compound authentication is the property that an execution of multiple authentication
+protocols, wherein at least one is uncompromised, jointly authenticates all protocols.
+Authenticating with an externally provisioned PSK, therefore, should ideally authenticate both
+the TLS connection and the external provision process. Typically, the external provision process
+produces a PSK and corresponding context in which the PSK should be used. We refer to an external
+PSK without such context as "context free".
+
+The Key Import API described in this document aims to achieve the following goals:
+
+1. Externally provisioned PSKs imported into TLS achieve compound authentication of the provision step and connection.
+2. Context-free PSKs only achieve authentication within the context of a single connection.
+3. Imported PSKs must not be used as IKM for two different KDFs.
+4. Imported PSKs must not collide with existing PSKs used for TLS 1.2 and below.
+5. Imported PSKs must not collide with future protocol versions and KDFs.
+
+[[ TODO: point to stable reference which describes the analysis of these goals ]]
 
 # Privacy Considerations
 
