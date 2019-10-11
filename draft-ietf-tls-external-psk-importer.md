@@ -30,6 +30,7 @@ normative:
   RFC2119:
   RFC6234:
 
+
 informative:
   CCB: DOI.10.14722/ndss.2015.23277
   Selfie:
@@ -42,7 +43,30 @@ informative:
              ins: S. Gueron
              name: Shay Gueron
      date: 2019
-     target: https://eprint.iacr.org/2019/347.pdf
+     target: https://eprint.iacr.org/2019/347.pdf 
+  Krawczyk:
+     title: "Selfie: reflections on TLS 1.3 with PSK"
+     author:
+         -
+             ins: N. Drucker
+             name: Nir Drucker
+         -
+             ins: S. Gueron
+             name: Shay Gueron
+     date: 2019
+     target: https://eprint.iacr.org/2019/347.pdf 
+
+  Sethi:
+     title: "Selfie: reflections on TLS 1.3 with PSK"
+     author:
+         -
+             ins: N. Drucker
+             name: Nir Drucker
+         -
+             ins: S. Gueron
+             name: Shay Gueron
+     date: 2019
+     target: https://eprint.iacr.org/2019/347.pdf 
 
 --- abstract
 
@@ -234,30 +258,21 @@ deployment considerations.
 
 # Addressing Selfie {#mitigate-selfie}
 
-The Selfie attack {{Selfie}} relies on a misuse of the PSK interface.
-The PSK interface makes the implicit assumption that each PSK
-is known only to one client and one server. If multiple clients or
-multiple servers with distinct roles share a PSK, TLS only
-authenticates the entire group. A node successfully authenticates
-its peer as being in the group whether the peer is another node or itself.
+The TLS external PSK authentication makes the implicit assumption that each PSK is known only to one client and one server, which do not switch roles with the same PSK.
 
-Applications which require authenticating finer-grained roles while still
-configuring a single shared PSK across all nodes can resolve this
-mismatch either by exchanging roles over the TLS connection after
-the handshake or by incorporating the roles of both the client and server
-into the IPSK context string. For instance, if an application
-identifies each node by MAC address, it could use the following context string.
+If multiple clients or multiple servers share a PSK, TLS only authenticates the entire group. Not only can a compromised group member impersonate another group member, but a malicious non-member can reroute handshakes between honest group members to connect them in unintended ways. This rerouting is a type of identity misbinding attack {{Krawczyk}}{{Sethi}}.
+
+Selfie attack {{Selfie}} is a special case of the rerouting attack against a group member that can act both as TLS server and client. In the selfie attack, a malicious non-member reroutes a connection from the client to the server on the same endpoint. 
+
+Rerouting and selfie attacks can be detected by binding the TLS handshake to globally unique node identifiers using the following context string: 
 
 ~~~
-  struct {
-    opaque client_mac<0..2^16-1>;
-    opaque server_mac<0..2^16-1>;
-  } Context;
+struct {
+       opaque client_id<0..2^16-1>;
+       opaque server_id<0..2^16-1>;
+     } Context;
 ~~~
 
-If an attacker then redirects a ClientHello intended for one node to a different
-node, the receiver will compute a different context string and the handshake
-will not complete.
+When the PSK is shared by only two endpoints, it is not necessary to know the identifier(s) of the other endpoint. Instead, it is sufficient to check that the identifier of the other endpoint in context is not equal to any of one’s own identifiers. To simplify implementation of this check, it is RECOMMENDED that each endpoint selects one globally unique identifier and uses it in all PSK handshakes. The unique identifier can, for example, be one of its MAC addresses or a 32-byte random number.
 
-Note that, in this scenario, there is still a single shared PSK across all nodes,
-so each node must be trusted not to impersonate another node's role.
+When the PSK is a group key, the comparison with one’s own identifiers will only prevent selfie attacks but not malicious rerouting of the connection to another group member. To prevent malicious rerouting in groups, each endpoint needs to know the identifier of the other endpoint with which they want to connect and compare it with the other endpoint’s identifier in context. Of course, this only prevents attacks by non-members; the endpoints that share the group key can always impersonate each other.
