@@ -43,6 +43,14 @@ informative:
              name: Shay Gueron
      date: 2019
      target: https://eprint.iacr.org/2019/347.pdf
+  Kraw10:
+     title: "Cryptographic Extraction and Key Derivation: The HKDF Scheme"
+     date: 2010
+     seriesinfo: Proceedings of CRYPTO 2010
+     target: https://eprint.iacr.org/2010/264
+     author:
+     -
+       ins: H. Krawczyk
 
 --- abstract
 
@@ -195,7 +203,34 @@ PSKs for TLS 1.2. Indeed, this is necessary for incremental deployment.
 
 # Security Considerations
 
-DISCLAIMER: This is a WIP draft and has not yet seen significant security analysis.
+The Key Importer security goals can be roughly stated as follows: avoid PSK re-use across
+KDFs while properly authenticating endpoints. When modeled as computational extractors, KDFs
+assume that input keying material (IKM) is sampled from some "source" probability distribution
+and that any two IKM values are chosen independently of each other {{Kraw10}}. This
+source-independence requirement implies that the same IKM value cannot be used for two different
+KDFs.
+
+PSK-based authentication is functionally equivalent to session resumption in that a connection
+uses existing key material to authenticate both endpoints. Following the work of
+{{?BAA15=DOI.10.14722/ndss.2015.23277}}, this is a form of compound authentication. Loosely
+speaking, compound authentication is the property that an execution of multiple authentication
+protocols, wherein at least one is uncompromised, jointly authenticates all protocols.
+Authenticating with an externally provisioned PSK, therefore, should ideally authenticate both
+the TLS connection and the external provision process. Typically, the external provision process
+produces a PSK and corresponding context from which the PSK was derived and in wihch it should
+be used. We refer to an external PSK without such context as "context free".
+
+Thus, in considering the source-independence and compound authentication requirements, the Key Import
+API described in this document aims to achieve the following goals:
+
+1. Externally provisioned PSKs imported into TLS achieve compound authentication of the
+provision step(s) and connection.
+2. Context-free PSKs only achieve authentication within the context of a single connection.
+3. Imported PSKs are used as IKM for two different KDFs.
+4. Imported PSKs do not collide with existing PSKs used for TLS 1.2 and below.
+5. Imported PSKs do not collide with future protocol versions and KDFs.
+
+[[ TODO: point to stable reference which describes the analysis of these goals ]]
 
 # Privacy Considerations
 
@@ -230,7 +265,7 @@ New target KDF values are allocated according to the following process:
 The authors thank Eric Rescorla and Martin Thomson for discussions that led to the
 production of this document, as well as Christian Huitema for input regarding privacy
 considerations of external PSKs. John Mattsson provided input regarding PSK importer
-deployment considerations.
+deployment considerations. Hugo Krawczyk provided guidance for the security considerations.
 
 # Addressing Selfie {#mitigate-selfie}
 
