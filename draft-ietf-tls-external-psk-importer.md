@@ -45,28 +45,30 @@ informative:
      date: 2019
      target: https://eprint.iacr.org/2019/347.pdf 
   Krawczyk:
-     title: "Selfie: reflections on TLS 1.3 with PSK"
+     title: "SIGMA: The ‘SIGn-and-MAc’ Approach to Authenticated Diffie-Hellman and Its Use in the IKE Protocols"
      author:
          -
-             ins: N. Drucker
-             name: Nir Drucker
-         -
-             ins: S. Gueron
-             name: Shay Gueron
-     date: 2019
-     target: https://eprint.iacr.org/2019/347.pdf 
+             ins: H. Krawczyk
+             name: Hugo Krawczyk
+     date: 2003
+     seriesinfo: Annual International Cryptology Conference. Springer, Berlin, Heidelberg
+     target: https://link.springer.com/content/pdf/10.1007/978-3-540-45146-4_24.pdf
 
   Sethi:
-     title: "Selfie: reflections on TLS 1.3 with PSK"
+     title: "Misbinding Attacks on Secure Device Pairing and Bootstrapping"
      author:
          -
-             ins: N. Drucker
-             name: Nir Drucker
+             ins: M. Sethi
+             name: Mohit Sethi
          -
-             ins: S. Gueron
-             name: Shay Gueron
+             ins: A. Peltonen
+             name: Aleksi Peltonen
+         -
+             ins: T. Aura
+             name: Tuomas Aura          
      date: 2019
-     target: https://eprint.iacr.org/2019/347.pdf 
+     seriesinfo: Proceedings of the 2019 ACM Asia Conference on Computer and Communications Security
+     target: https://arxiv.org/pdf/1902.07550
 
 --- abstract
 
