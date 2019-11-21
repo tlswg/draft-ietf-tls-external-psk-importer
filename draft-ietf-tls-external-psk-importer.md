@@ -116,6 +116,38 @@ connection, which is a tuple of (Base Key, External Identity, Hash).
 and target protocol and KDF.
 - Imported Identity: The identity of an Imported PSK as sent on the wire.
 
+# Binder Key
+To prevent PSK Importers from being confused with standard OOB PSKs we change the label used in the computation of the PSK binder key.
+In TLS 1.3 the PSK binder key computation is defined as follows:
+
+~~~
+             0
+             |
+             v
+   PSK ->  HKDF-Extract = Early Secret
+             |
+             +-----> Derive-Secret(., "ext binder" | "res binder", "")
+             |                     = binder_key
+~~~
+
+We replace the string "ext binder" with "imp binder".
+This means the binder key is now computed as follows:
+
+~~~
+             0
+             |
+             v
+   PSK ->  HKDF-Extract = Early Secret
+             |
+             +-----> Derive-Secret(., "ext binder"
+             |                      | "res binder"
+             |                      | "imp binder", "")
+             |                     = binder_key
+~~~
+
+This new label differentiates non-imported and imported external PSKs. Specifically, a client and server will negotiate use of an external PSK if and only if (a) both endpoints import the PSK or (b) neither endpoint imports the PSK.
+The `binder_key` is a leaf key. Therefore, changing its computation doesn't affect any other key.
+
 # Key Import
 
 A key importer takes as input an EPSK with external identity `external_identity` and base key `epsk`,
