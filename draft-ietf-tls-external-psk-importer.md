@@ -76,8 +76,7 @@ This document specifies an interface by which external PSKs may be imported for 
 to achieve this goal. In particular, it describes how KDF-bound PSKs can be differentiated by
 the target (D)TLS protocol version and KDF for which the PSK will be used. This produces a set
 of candidate PSKs, each of which are bound to a specific target protocol and KDF. This expands what
-would normally have been a single PSK identity into a set of PSK identities. However, importantly,
-it requires no change to the TLS 1.3 key schedule.
+would normally have been a single PSK identity into a set of PSK identities.
 
 # Conventions and Definitions
 
@@ -91,15 +90,14 @@ when, and only when, they appear in all capitals, as shown here.
 Key importers mirror the concept of key exporters in TLS in that they diversify a key
 based on some contextual information before use in a connection. In contrast to key exporters,
 wherein differentiation is done via an explicit label and context string, the key importer
-defined herein uses an optional context string along with a target protocol and KDF
-identifier to differentiate an external PSK into one or more PSKs for use.
+defined herein diversifies external one PSK into one or more PSKs for use via a target protocol,
+KDF identifier, and optional context string. Additionally, the resulting PSK binder key is modified
+with a new derivation label to prevent confusion with non-imported PSKs.
 
 Imported keys do not require negotiation for use, as a client and server will not agree upon
-identities if not imported correctly. Thus, importers induce no protocol changes with
-the exception of expanding the set of PSK identities sent on the wire. Endpoints may
-incrementally deploy PSK importer support by offering non-imported keys for TLS versions
-prior to TLS 1.3. Non-imported and imported PSKs are distinct since their identities are
-different on the wire. See {{rollout}} for more details.
+identities if not imported correctly. Endpoints may incrementally deploy PSK importer support
+by offering non-imported keys for TLS versions prior to TLS 1.3. Non-imported and imported PSKs
+are distinct since their identities are different on the wire. See {{rollout}} for more details.
 
 Clients which import external keys TLS MUST NOT use these keys for any other purpose.
 Moreover, each external PSK MUST be associated with at most one hash function.
@@ -116,39 +114,14 @@ connection, which is a tuple of (Base Key, External Identity, Hash).
 and target protocol and KDF.
 - Imported Identity: The identity of an Imported PSK as sent on the wire.
 
-# Binder Key
-To prevent PSK Importers from being confused with standard OOB PSKs we change the label used in the computation of the PSK binder key.
-In TLS 1.3 the PSK binder key computation is defined as follows:
-
-~~~
-             0
-             |
-             v
-   PSK ->  HKDF-Extract = Early Secret
-             |
-             +-----> Derive-Secret(., "ext binder" | "res binder", "")
-             |                     = binder_key
-~~~
-
-We replace the string "ext binder" with "imp binder".
-This means the binder key is now computed as follows:
-
-~~~
-             0
-             |
-             v
-   PSK ->  HKDF-Extract = Early Secret
-             |
-             +-----> Derive-Secret(., "ext binder"
-             |                      | "res binder"
-             |                      | "imp binder", "")
-             |                     = binder_key
-~~~
-
-This new label differentiates non-imported and imported external PSKs. Specifically, a client and server will negotiate use of an external PSK if and only if (a) both endpoints import the PSK or (b) neither endpoint imports the PSK.
-The `binder_key` is a leaf key. Therefore, changing its computation doesn't affect any other key.
-
 # Key Import
+
+A key importer diversifies an input EPSK into one or more PSKs advertised on the wire via
+a target protocol, KDF identifier, and optional context string. Additionally, the resulting
+PSK binder key is modified with a new derivation label to prevent confusion with non-imported
+PSKs. This section describes the diversification mechanism and binder key computation change.
+
+## External PSK Diversification
 
 A key importer takes as input an EPSK with external identity `external_identity` and base key `epsk`,
 as defined in {{terminology}}, along with an optional context, and transforms it into a set of PSKs
@@ -166,7 +139,7 @@ struct {
 ~~~
 
 The list of `target_kdf` values is maintained by IANA as described in {{IANA}}. External PSKs MUST NOT
-be imported for versions of (D)TLS 1.2 or prior versions. See {{rollout}} for discussion on
+be imported for (D)TLS 1.2 or prior versions. See {{rollout}} for discussion on
 how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions co-exist for incremental
 deployment.
 
@@ -196,7 +169,8 @@ For hash-based KDFs, such as HKDF_SHA256(0x0001), this is the length of the hash
 output, i.e., 32 octets. This is required for the IPSK to be of length suitable for supported
 ciphersuites.
 
-The identity of 'ipskx' as sent on the wire is ImportedIdentity.
+The identity of 'ipskx' as sent on the wire is ImportedIdentity, i.e., the serialized content
+of ImportedIdentity.
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
 It is not the hash function associated with ImportedIdentity.target_kdf. If no hash function
@@ -216,6 +190,44 @@ of a connection.
 EPSKs may be imported for early data use if they are bound to protocol settings and configurations that would
 otherwise be required for early data with normal (ticket-based PSK) resumption. Minimally, that means ALPN,
 QUIC transport settings, etc., must be provisioned alongside these EPSKs.
+
+## Binder Key Derivation
+
+To prevent PSK Importers from being confused with standard out-of-band PSKs, imported PSKs
+change the PSK binder key derivation label. In particular, the standard TLS 1.3 PSK binder key
+computation is defined as follows:
+
+~~~
+             0
+             |
+             v
+   PSK ->  HKDF-Extract = Early Secret
+             |
+             +-----> Derive-Secret(., "ext binder" | "res binder", "")
+             |                     = binder_key
+             V
+~~~
+
+Imported PSKs replace the string "ext binder" with "imp binder" when deriving `binder_key`.
+This means the binder key is now computed as follows:
+
+~~~
+             0
+             |
+             v
+   PSK ->  HKDF-Extract = Early Secret
+             |
+             +-----> Derive-Secret(., "ext binder"
+             |                      | "res binder"
+             |                      | "imp binder", "")
+             |                     = binder_key
+             V
+~~~
+
+This new label differentiates non-imported and imported external PSKs. Specifically, a client and
+server will negotiate use of an external PSK if and only if (a) both endpoints import the PSK or
+(b) neither endpoint imports the PSK. As `binder_key` is a leaf key, changing its computation does
+not affect any other key.
 
 # Deprecating Hash Functions
 
@@ -275,15 +287,12 @@ persistent tracking identifier.
 This specification introduces a new registry for TLS KDF identifiers and defines the following
 target KDF values:
 
-+--------------------+--------+
 | Description        | Value  |
-+--------------------+--------+
+|:-------------------|:-------|
 | Reserved           | 0x0000 |
-|                    |        |
 | HKDF_SHA256        | 0x0001 |
-|                    |        |
 | HKDF_SHA384        | 0x0002 |
-+--------------------+--------+
+{: #kdf-registry title="Target KDF Registry"}
 
 New target KDF values are allocated according to the following process:
 
