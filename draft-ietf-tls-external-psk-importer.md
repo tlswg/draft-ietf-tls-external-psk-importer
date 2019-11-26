@@ -170,7 +170,7 @@ output, i.e., 32 octets. This is required for the IPSK to be of length suitable 
 ciphersuites.
 
 The identity of 'ipskx' as sent on the wire is ImportedIdentity, i.e., the serialized content
-of ImportedIdentity.
+of ImportedIdentity is used as the content of PskIdentity.identity in the PSK extension.
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
 It is not the hash function associated with ImportedIdentity.target_kdf. If no hash function
