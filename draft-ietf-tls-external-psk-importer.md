@@ -288,7 +288,7 @@ This specification introduces a new registry for TLS KDF identifiers and defines
 target KDF values:
 
 | Description        | Value  |
-|:-------------------|:-------|
+|:-------------------|-------:|
 | Reserved           | 0x0000 |
 | HKDF_SHA256        | 0x0001 |
 | HKDF_SHA384        | 0x0002 |
