@@ -261,11 +261,11 @@ speaking, compound authentication is the property that an execution of multiple 
 protocols, wherein at least one is uncompromised, jointly authenticates all protocols.
 Authenticating with an externally provisioned PSK, therefore, should ideally authenticate both
 the TLS connection and the external provision process. Typically, the external provision process
-produces a PSK and corresponding context from which the PSK was derived and in wihch it should
+produces a PSK and corresponding context from which the PSK was derived and in which it should
 be used. We refer to an external PSK without such context as "context free".
 
-Thus, in considering the source-independence and compound authentication requirements, the Key Import
-API described in this document aims to achieve the following goals:
+Thus, in considering the source-independence and compound authentication requirements, the Key
+Import API described in this document aims to achieve the following goals:
 
 1. Externally provisioned PSKs imported into TLS achieve compound authentication of the
 provision step(s) and connection.
@@ -273,8 +273,6 @@ provision step(s) and connection.
 3. Imported PSKs are used as IKM for two different KDFs.
 4. Imported PSKs do not collide with existing PSKs used for TLS 1.2 and below.
 5. Imported PSKs do not collide with future protocol versions and KDFs.
-
-[[ TODO: point to stable reference which describes the analysis of these goals ]]
 
 # Privacy Considerations
 
@@ -287,8 +285,8 @@ persistent tracking identifier.
 This specification introduces a new registry for TLS KDF identifiers and defines the following
 target KDF values:
 
-| Description        | Value  |
-|:-------------------|-------:|
+| KDF Description    | Value  |
+|:-------------------|:-------|
 | Reserved           | 0x0000 |
 | HKDF_SHA256        | 0x0001 |
 | HKDF_SHA384        | 0x0002 |
