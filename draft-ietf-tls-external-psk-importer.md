@@ -107,12 +107,12 @@ Moreover, each external PSK MUST be associated with at most one hash function.
 - External PSK (EPSK): A PSK established or provisioned out-of-band, i.e., not from a TLS
 connection, which is a tuple of (Base Key, External Identity, Hash).
 - Base Key: The secret value of an EPSK.
-- External Identity: The identity of an EPSK.
+- External Identity: A sequence of bytes used to identify an EPSK.
 - Target protocol: The protocol for which a PSK is imported for use.
 - Target KDF: The KDF for which a PSK is imported for use.
 - Imported PSK (IPSK): A PSK derived from an EPSK, external identity, optional context string,
 and target protocol and KDF.
-- Imported Identity: The identity of an Imported PSK as sent on the wire.
+- Imported Identity: A sequence of bytes used to identify an IPSK.
 
 # Key Import
 
