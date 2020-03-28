@@ -21,8 +21,7 @@ author:
   -
     ins: C. A. Wood
     name: Christopher A. Wood
-    organization: Apple, Inc.
-    email: cawood@apple.com
+    email: caw@heapingbits.net
 
 
 normative:
