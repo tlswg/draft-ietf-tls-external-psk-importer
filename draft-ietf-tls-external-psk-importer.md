@@ -90,18 +90,21 @@ when, and only when, they appear in all capitals, as shown here.
 The PSK Importer interface mirrors that of the TLS Exporters interface in that
 it diversify a key based on some contextual information. In contrast to the Exporters
 interface, wherein differentiation is done via an explicit label and context string,
-the PSK Importer interface defined herein diversifies external one PSK into one or
-more PSKs and identities via a target protocol, KDF identifier, and optional
-context string. Additionally, the resulting PSK binder keys are modified with a
-new derivation label to prevent confusion with non-imported PSKs.
+the PSK Importer interface defined herein takes an external PSK and identity and
+"imports" it into TLS, creating a set of "derived" PSKs and identities. Each of these
+derived PSKs are bound a target protocol, KDF identifier, and optional context string.
+Additionally, the resulting PSK binder keys are modified with a new derivation label
+to prevent confusion with non-imported PSKs.
 
 Imported keys do not require negotiation for use since a client and server will not agree upon
 identities if imported incorrectly. Endpoints may incrementally deploy PSK Importer support
 by offering non-imported keys for TLS versions prior to TLS 1.3. Non-imported and imported PSKs
 are distinct since their identities are different on the wire. See {{rollout}} for more details.
 
-Clients which import external keys TLS MUST NOT use these keys for any other purpose.
-Moreover, each external PSK MUST be associated with at most one hash function.
+Clients which import external keys MUST NOT use either the external keys or the derived
+keys for any other purpose. Moreover, each external PSK MUST be associated with at most
+one hash function, as per the rules in Section 4.2.11 from {{!RFC8446}}.
+See {{security-considerations}} for more discussion.
 
 ## Terminology {#terminology}
 
