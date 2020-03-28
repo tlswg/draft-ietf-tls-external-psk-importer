@@ -21,8 +21,7 @@ author:
   -
     ins: C. A. Wood
     name: Christopher A. Wood
-    organization: Apple, Inc.
-    email: cawood@apple.com
+    email: caw@heapingbits.net
 
 
 normative:
@@ -99,8 +98,10 @@ identities if not imported correctly. Endpoints may incrementally deploy PSK imp
 by offering non-imported keys for TLS versions prior to TLS 1.3. Non-imported and imported PSKs
 are distinct since their identities are different on the wire. See {{rollout}} for more details.
 
-Clients which import external keys TLS MUST NOT use these keys for any other purpose.
-Moreover, each external PSK MUST be associated with at most one hash function.
+Clients which import external keys for TLS MUST NOT use these keys for any other
+purpose. Moreover, each external PSK MUST be associated with at most one hash function,
+as per the rules in Section 4.2.11 from {{!RFC8446}}. See {{security-considerations}}
+for more discussion.
 
 ## Terminology {#terminology}
 
@@ -245,14 +246,15 @@ PSKs imported for TLS 1.3 are distinct from those used in TLS 1.2, and thereby a
 cross-protocol collisions. Note that this does not preclude endpoints from using non-imported
 PSKs for TLS 1.2. Indeed, this is necessary for incremental deployment.
 
-# Security Considerations
+# Security Considerations {#security-considerations}
 
 The Key Importer security goals can be roughly stated as follows: avoid PSK re-use across
 KDFs while properly authenticating endpoints. When modeled as computational extractors, KDFs
 assume that input keying material (IKM) is sampled from some "source" probability distribution
 and that any two IKM values are chosen independently of each other {{Kraw10}}. This
 source-independence requirement implies that the same IKM value cannot be used for two different
-KDFs.
+KDFs. As a corollary, this means that each external PSK MUST be associated with
+at most one hash function.
 
 PSK-based authentication is functionally equivalent to session resumption in that a connection
 uses existing key material to authenticate both endpoints. Following the work of
