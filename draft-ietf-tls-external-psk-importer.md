@@ -87,7 +87,7 @@ when, and only when, they appear in all capitals, as shown here.
 # Overview
 
 The PSK Importer interface mirrors that of the TLS Exporters interface in that
-it diversify a key based on some contextual information. In contrast to the Exporters
+it diversifies a key based on some contextual information. In contrast to the Exporters
 interface, wherein differentiation is done via an explicit label and context string,
 the PSK Importer interface defined herein takes an external PSK and identity and
 "imports" it into TLS, creating a set of "derived" PSKs and identities. Each of these
@@ -190,7 +190,8 @@ EPSKs may be imported before the start of a connection if the target KDFs, proto
 context string(s) are known a priori. EPSKs may also be imported for early data use
 if they are bound to protocol settings and configurations that would otherwise be
 required for early data with normal (ticket-based PSK) resumption. Minimally, that
-means ALPN, QUIC transport settings, etc., must be provisioned alongside these EPSKs.
+means ALPN, QUIC transport parameters (if used for QUIC), etc., must be provisioned
+alongside these EPSKs.
 
 ## Binder Key Derivation
 
