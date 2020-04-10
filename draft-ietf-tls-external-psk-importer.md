@@ -28,6 +28,7 @@ normative:
   RFC1035:
   RFC2119:
   RFC6234:
+  RFC8447:
 
 informative:
   CCB: DOI.10.14722/ndss.2015.23277
@@ -285,8 +286,9 @@ persistent tracking identifier.
 
 # IANA Considerations {#IANA}
 
-This specification introduces a new registry for TLS KDF identifiers and defines the following
-target KDF values:
+This specification introduces a new registry for TLS KDF identifiers, titled "TLS KDF Identifiers", under the existing "Transport Layer Security (TLS) Parameters" heading.
+
+The entries in the registry are:
 
 | KDF Description    | Value  |
 |:-------------------|:-------|
@@ -299,6 +301,8 @@ New target KDF values are allocated according to the following process:
 
 - Values in the range 0x0000-0xfeff are assigned via Specification Required {{!RFC8126}}.
 - Values in the range 0xff00-0xffff are reserved for Private Use {{!RFC8126}}.
+
+The procedures for requesting values in the Specification Required space are specified in Section 17 of {{!RFC844}}.
 
 --- back
 
