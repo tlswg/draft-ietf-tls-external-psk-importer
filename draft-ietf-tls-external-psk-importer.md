@@ -25,9 +25,7 @@ author:
 
 
 normative:
-  RFC1035:
   RFC2119:
-  RFC6234:
 
 informative:
   CCB: DOI.10.14722/ndss.2015.23277
@@ -93,14 +91,15 @@ the PSK Importer interface defined herein takes an external PSK and identity and
 "imports" it into TLS, creating a set of "derived" PSKs and identities. Each of these
 derived PSKs are bound a target protocol, KDF identifier, and optional context string.
 Additionally, the resulting PSK binder keys are modified with a new derivation label
-to prevent confusion with non-imported PSKs.
+to prevent confusion with non-imported PSKs. Through this interface, importing external
+PSKs with different identities yields distinct PSK binder keys.
 
 Imported keys do not require negotiation for use since a client and server will not agree upon
 identities if imported incorrectly. Endpoints may incrementally deploy PSK Importer support
 by offering non-imported keys for TLS versions prior to TLS 1.3. Non-imported and imported PSKs
 are distinct since their identities are different on the wire. See {{rollout}} for more details.
 
-Clients which import external keys MUST NOT use either the external keys or the derived
+Endpoints which import external keys MUST NOT use either the external keys or the derived
 keys for any other purpose. Moreover, each external PSK MUST be associated with at most
 one hash function, as per the rules in Section 4.2.11 from {{!RFC8446}}.
 See {{security-considerations}} for more discussion.
@@ -146,7 +145,7 @@ deployment.
 
 ImportedIdentity.context MUST include the context used to derive the EPSK, if any exists.
 For example, ImportedIdentity.context may include information about peer roles or identities
-to mitigate Selfie-style reflection attacks. See {{mitigate-selfie}} for more details.
+to mitigate Selfie-style reflection attacks {{Selfie}}. See {{mitigate-selfie}} for more details.
 If the EPSK is a key derived from some other protocol or sequence of protocols,
 ImportedIdentity.context MUST include a channel binding for the deriving protocols
 {{!RFC5056}}.
