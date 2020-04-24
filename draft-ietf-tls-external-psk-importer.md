@@ -311,6 +311,8 @@ The authors thank Eric Rescorla and Martin Thomson for discussions that led to t
 production of this document, as well as Christian Huitema for input regarding privacy
 considerations of external PSKs. John Mattsson provided input regarding PSK importer
 deployment considerations. Hugo Krawczyk provided guidance for the security considerations.
+Martin Thomson, Jonathan Hoyland, Scott Hollenbeck and others all provided reviews,
+feedback, and suggestions for improving the document.
 
 # Addressing Selfie {#mitigate-selfie}
 
