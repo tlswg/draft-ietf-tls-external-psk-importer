@@ -277,6 +277,9 @@ of the provisioning process and connection.
 4. Imported PSKs do not collide with existing PSKs used for TLS 1.2 and below.
 5. Imported PSKs do not collide with future protocol versions and KDFs.
 
+The PSK Importer does not prevent applications from constructing non-importer PSK identities
+that collide with imported PSK identities.
+
 # Privacy Considerations
 
 External PSK identities are typically static by design so that endpoints may use them to
