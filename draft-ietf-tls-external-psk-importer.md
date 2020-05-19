@@ -278,8 +278,11 @@ of the provisioning process and connection.
 3. Imported PSKs are not used as IKM for two different KDFs.
 4. Imported PSKs do not collide with future protocol versions and KDFs.
 
-There is no known interference between Imported PSKs and existing PSKs used for
-(D)TLS 1.2 and below.
+There is no known interference between the process for computing Imported PSKs
+from an external PSK and the processing of existing external PSKs used in
+(D)TLS 1.2 and below. However, only limited analysis has been done, which is an
+additional reason why applications SHOULD provision separate PSKs for (D)TLS 1.3
+and prior versions when possible, even when the importer interface is used in (D)TLS 1.3.
 
 # Privacy Considerations
 
