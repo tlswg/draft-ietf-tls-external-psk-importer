@@ -29,7 +29,6 @@ normative:
   RFC8447:
 
 informative:
-  CCB: DOI.10.14722/ndss.2015.23277
   Selfie:
      title: "Selfie: reflections on TLS 1.3 with PSK"
      author:
@@ -202,30 +201,30 @@ the PSK binder key derivation label. In particular, the standard TLS 1.3 PSK bin
 key computation is defined as follows:
 
 ~~~
-             0
-             |
-             v
-   PSK ->  HKDF-Extract = Early Secret
-             |
-             +-----> Derive-Secret(., "ext binder" | "res binder", "")
-             |                     = binder_key
-             V
+           0
+           |
+           v
+ PSK ->  HKDF-Extract = Early Secret
+           |
+           +-----> Derive-Secret(., "ext binder" | "res binder", "")
+           |                     = binder_key
+           V
 ~~~
 
 Imported PSKs replace the string "ext binder" with "imp binder" when deriving `binder_key`.
 This means the binder key is computed as follows:
 
 ~~~
-             0
-             |
-             v
-   PSK ->  HKDF-Extract = Early Secret
-             |
-             +-----> Derive-Secret(., "ext binder"
-             |                      | "res binder"
-             |                      | "imp binder", "")
-             |                     = binder_key
-             V
+           0
+           |
+           v
+ PSK ->  HKDF-Extract = Early Secret
+           |
+           +-----> Derive-Secret(., "ext binder"
+           |                      | "res binder"
+           |                      | "imp binder", "")
+           |                     = binder_key
+           V
 ~~~
 
 This new label ensures a client and server will negotiate use of an external PSK if
@@ -295,7 +294,8 @@ persistent tracking identifier.
 
 # IANA Considerations {#IANA}
 
-This specification introduces a new registry for TLS KDF identifiers, titled "TLS KDF Identifiers", under the existing "Transport Layer Security (TLS) Parameters" heading.
+This specification introduces a new registry for TLS KDF identifiers, titled
+"TLS KDF Identifiers", under the existing "Transport Layer Security (TLS) Parameters" heading.
 
 The entries in the registry are:
 
