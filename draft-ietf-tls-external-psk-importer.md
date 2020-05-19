@@ -62,19 +62,21 @@ into TLS 1.3.
 TLS 1.3 {{!RFC8446}} supports Pre-Shared Key (PSK) authentication, wherein PSKs
 can be established via session tickets from prior connections or externally via some out-of-band
 mechanism. The protocol mandates that each PSK only be used with a single hash function.
-This was done to simplify protocol analysis. TLS 1.2 {{!RFC5246}}, in contrast, has no such requirement, as
-a PSK may be used with any hash algorithm and the TLS 1.2 PRF. This means that external PSKs
-could possibly be re-used in two different contexts with the same hash functions during key
-derivation. Moreover, it requires external PSKs to be provisioned for specific hash
-functions.
+This was done to simplify protocol analysis. TLS 1.2 {{!RFC5246}}, in contrast,
+has no such requirement, as a PSK may be used with any hash algorithm and the
+TLS 1.2 PRF. While there is no known way in which the same external PSK might
+produce related output in TLS 1.3 and prior versions, only limited analysis has
+been done. Applications SHOULD provision separate PSKs for TLS 1.3 and prior
+versions when possible.
 
-To mitigate these problems, this document specifies a PSK Importer interface by which
-external PSKs may be imported and subsequently bound to a specific KDF and hash function
-for use in TLS 1.3. In particular, it describes a mechanism for differentiating
-external PSKs by the target KDF, (D)TLS protocol version, and an optional context
-string. This process yields a set of candidate PSKs, each of which are bound
-to a target KDF and protocol. This expands what would normally have been a single
-PSK and identity into a set of PSKs and identities.
+To mitigate against any interference, this document specifies a PSK Importer
+interface by which external PSKs may be imported and subsequently bound to a specific
+KDF and hash function for use in (D)TLS 1.3. In particular, it describes a mechanism
+for differentiating external PSKs by the target KDF, (D)TLS protocol version, and
+an optional context string. This process yields a set of candidate PSKs, each of
+which are bound to a target KDF and protocol, that are separate from those used
+in (D)TLS 1.2 and prior versions. This expands what would normally have been a
+single PSK and identity into a set of PSKs and identities.
 
 # Conventions and Definitions
 
@@ -274,8 +276,13 @@ Import interface described in this document aims to achieve the following goals:
 of the provisioning process and connection.
 2. Context-free PSKs only achieve authentication within the context of a single connection.
 3. Imported PSKs are not used as IKM for two different KDFs.
-4. Imported PSKs do not collide with existing PSKs used for TLS 1.2 and below.
-5. Imported PSKs do not collide with future protocol versions and KDFs.
+4. Imported PSKs do not collide with future protocol versions and KDFs.
+
+There is no known interference between the process for computing Imported PSKs
+from an external PSK and the processing of existing external PSKs used in
+(D)TLS 1.2 and below. However, only limited analysis has been done, which is an
+additional reason why applications SHOULD provision separate PSKs for (D)TLS 1.3
+and prior versions when possible, even when the importer interface is used in (D)TLS 1.3.
 
 The PSK Importer does not prevent applications from constructing non-importer PSK identities
 that collide with imported PSK identities.
