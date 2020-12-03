@@ -70,14 +70,14 @@ can be established via session tickets from prior connections or externally via 
 mechanism. The protocol mandates that each PSK only be used with a single hash function.
 This was done to simplify protocol analysis. TLS 1.2 {{!RFC5246}}, in contrast,
 has no such requirement, as a PSK may be used with any hash algorithm and the
-TLS 1.2 Pseudorandom Function (PRF). While there is no known way in which the same
+TLS 1.2 pseudorandom function (PRF). While there is no known way in which the same
 external PSK might produce related output in TLS 1.3 and prior versions, only limited
 analysis has been done. Applications SHOULD provision separate PSKs for TLS 1.3 and
 prior versions.
 
 To mitigate against any interference, this document specifies a PSK Importer
 interface by which external PSKs may be imported and subsequently bound to a specific
-Key Derivation Function (KDF) and hash function for use in TLS 1.3 {{!RFC8446}}
+key derivation function (KDF) and hash function for use in TLS 1.3 {{!RFC8446}}
 and DTLS 1.3 {{!DTLS13=I-D.ietf-tls-dtls13}}. In particular,
 it describes a mechanism for differentiating external PSKs by the target KDF, (D)TLS
 protocol version, and an optional context string. This process yields a set of candidate
