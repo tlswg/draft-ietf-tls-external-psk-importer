@@ -30,6 +30,12 @@ normative:
   RFC8447:
 
 informative:
+  SHA2:
+    title: "Secure Hash Standard"
+    seriesinfo: FIPS PUB 180-3
+    date: October 2008
+    author:
+        - org: National Institute of Standards and Technology
   Selfie:
      title: "Selfie: reflections on TLS 1.3 with PSK"
      author:
@@ -71,7 +77,8 @@ prior versions.
 
 To mitigate against any interference, this document specifies a PSK Importer
 interface by which external PSKs may be imported and subsequently bound to a specific
-Key Derivation Function (KDF) and hash function for use in (D)TLS 1.3. In particular,
+Key Derivation Function (KDF) and hash function for use in TLS 1.3 {{!RFC8446}}
+and DTLS 1.3 {{!DTLS13=I-D.ietf-tls-dtls13}}. In particular,
 it describes a mechanism for differentiating external PSKs by the target KDF, (D)TLS
 protocol version, and an optional context string. This process yields a set of candidate
 PSKs, each of which are bound to a target KDF and protocol, that are separate from those
@@ -141,7 +148,7 @@ struct {
 } ImportedIdentity;
 ~~~
 
-The list of `target_kdf` values is maintained by IANA as described in {{IANA}}.
+The list of ImportedIdentity.target_kdf values is maintained by IANA as described in {{IANA}}.
 External PSKs MUST NOT be imported for (D)TLS 1.2 or prior versions. See {{rollout}} for discussion on
 how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions co-exist for incremental
 deployment.
@@ -151,7 +158,8 @@ For example, ImportedIdentity.context may include information about peer roles o
 to mitigate Selfie-style reflection attacks {{Selfie}}. See {{mitigate-selfie}} for more details.
 If the EPSK is a key derived from some other protocol or sequence of protocols,
 ImportedIdentity.context MUST include a channel binding for the deriving protocols
-{{!RFC5056}}.
+{{!RFC5056}}. The details of this binding are protocol specific and out of scope for
+this document.
 
 ImportedIdentity.target_protocol MUST be the (D)TLS protocol version for which the
 PSK is being imported. For example, TLS 1.3 {{!RFC8446}} uses 0x0304, which will
@@ -179,7 +187,7 @@ The corresponding TLS 1.3 binder key is `ipskx`.
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
 It is not the hash function associated with ImportedIdentity.target_kdf. If no hash function
-is specified, SHA-256 MUST be used. Diversifying EPSK by ImportedIdentity.target_kdf ensures
+is specified, SHA-256 {{SHA2}} MUST be used. Diversifying EPSK by ImportedIdentity.target_kdf ensures
 that an IPSK is only used as input keying material to at most one KDF, thus satisfying
 the requirements in {{!RFC8446}}. See {{security-considerations}} for more details.
 
@@ -189,12 +197,13 @@ yield two PSKs, one for HKDF-SHA256 and another for HKDF-SHA384. In contrast, if
 TLS_AES_128_GCM_SHA256 and TLS_CHACHA20_POLY1305_SHA256 are supported, only one
 derived key is necessary.
 
-EPSKs may be imported before the start of a connection if the target KDFs, protocols, and
-context string(s) are known a priori. EPSKs may also be imported for early data use
+EPSKs MAY be imported before the start of a connection if the target KDFs, protocols, and
+context string(s) are known a priori. EPSKs MAY also be imported for early data use
 if they are bound to protocol settings and configurations that would otherwise be
 required for early data with normal (ticket-based PSK) resumption. Minimally, that
-means ALPN, QUIC transport parameters (if used for QUIC), etc., must be provisioned
-alongside these EPSKs.
+means Application-Layer Protocol Negotiation {{?RFC7301}}, QUIC transport parameters
+(if used for QUIC), and any other relevant parameters that are negotiated for early data
+MUST be provisioned alongside these EPSKs.
 
 ## Binder Key Derivation
 
@@ -303,11 +312,11 @@ This specification introduces a new registry for TLS KDF identifiers, titled
 
 The entries in the registry are:
 
-| KDF Description    | Value  |
-|:-------------------|:-------|
-| Reserved           | 0x0000 |
-| HKDF_SHA256        | 0x0001 |
-| HKDF_SHA384        | 0x0002 |
+| KDF Description    | Value  | Reference  |
+|:-------------------|:-------|:-----------|
+| Reserved           | 0x0000 |N/A         |
+| HKDF_SHA256        | 0x0001 |{{!RFC5869}}|
+| HKDF_SHA384        | 0x0002 |{{!RFC5869}}|
 {: #kdf-registry title="Target KDF Registry"}
 
 New target KDF values are allocated according to the following process:
