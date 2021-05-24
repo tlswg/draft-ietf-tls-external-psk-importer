@@ -187,7 +187,7 @@ IPSK with base key `ipskx` is computed as follows:
 
 L corresponds to the KDF output length of ImportedIdentity.target_kdf as defined in {{IANA}}.
 For hash-based KDFs, such as HKDF_SHA256(0x0001), this is the length of the hash function
-output, i.e., 32 octets for SHA256. This is required for the IPSK to be of length suitable
+output, e.g., 32 octets for SHA256. This is required for the IPSK to be of length suitable
 for supported ciphersuites. Internally, HKDF-Expand-Label uses a label corresponding to
 ImportedIdentity.target_protocol, e.g., "tls13" for TLS 1.3, as per {{RFC8446}}, Section 7.1,
 or "dtls13" for DTLS 1.3, as per {{?I-D.ietf-tls-dtls13}}, Section 5.10.
