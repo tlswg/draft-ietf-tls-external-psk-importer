@@ -185,6 +185,10 @@ The identity of `ipskx` as sent on the wire is ImportedIdentity, i.e., the seria
 of ImportedIdentity is used as the content of PskIdentity.identity in the PSK extension.
 The corresponding TLS 1.3 binder key is `ipskx`.
 
+As the maximum size of the PSK extension is 2^16 - 1 octets, an Imported Identity that exceeds 
+this size is likely to cause a decoding error. Therefore, the PSK Importer interface SHOULD reject 
+any ImportedIdentity that exceeds this size.
+
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
 It is not the hash function associated with ImportedIdentity.target_kdf. If no hash function
 is specified, SHA-256 {{SHA2}} MUST be used. Diversifying EPSK by ImportedIdentity.target_kdf ensures
