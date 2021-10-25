@@ -226,7 +226,8 @@ key computation is defined as follows:
            V
 ~~~
 
-Imported PSKs replace the string "ext binder" with "imp binder" when deriving `binder_key`.
+Imported PSKs use the string "imp binder" rather than "ext binder" or "res binder"
+when deriving `binder_key`.
 This means the binder key is computed as follows:
 
 ~~~
