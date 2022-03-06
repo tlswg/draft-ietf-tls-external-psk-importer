@@ -115,8 +115,8 @@ are distinct since their identities are different on the wire. See {{rollout}} f
 Endpoints which import external keys MUST NOT use the keys that are input to the
 import process for any purpose other than the importer, and MUST NOT use the derived
 keys for any purpose other than TLS PSKs. Moreover, each external PSK fed to the
-importer process MUST be associated with at most one hash function, as per the
-rules in Section 4.2.11 from {{!RFC8446}}. See {{security-considerations}} for
+importer process MUST be associated with at most one hash function.  This
+is analogous to the rules in Section 4.2.11 of {{!RFC8446}}. See {{security-considerations}} for
 more discussion.
 
 ## Terminology {#terminology}
