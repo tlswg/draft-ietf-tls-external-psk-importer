@@ -263,22 +263,27 @@ This does not affect the KDF operation used to derive Imported PSKs.
 
 # Incremental Deployment {#rollout}
 
-Recall that TLS 1.2 permits computing the TLS PRF with any hash algorithm and PSK.
-Accordingly, a given EPSK might be both used directly as a TLS 1.2 PSK and used with
-TLS 1.3 via the importer mechanism (noting that this configuration is not recommended,
-per {intro}}), using the same KDF algorithm.  However, because the TLS 1.3 importer
-mechanism includes an additional key-derivation step, the actual PSK used in the TLS
-1.3 key schedule will be distinct from the one used in the TLS 1.2 key schedule, so
-there are no cross-protocol collisions possible. Note that this does not preclude
-endpoints from continuing to use TLS 1.2 and the non-imported PSKs it requires.
-Indeed, this is necessary for incremental deployment. Specifically, existing
-applications using TLS 1.2 with non-imported PSKs can safely enable TLS 1.3 with
-imported PSKs in clients and servers without interoperability risk.
+The mechanism defined in this document requires that an EPSK is only ever used as an
+EPSK and not for any other purpose. In particular, this requirement disallows direct
+use of the EPSK as a PSK in TLS 1.2. The importer process produces distinct IPSKs
+derived from the target protocol and KDF, which in turn protects against cross-protocol
+collisions for protocol versions using this process by ensuring that each IPSK can only
+be used with one protocol and KDF. This is a distinct contrast to TLS 1.2, where a given
+PSK might be used with multiple KDFs in different handshakes, and importers are not
+available. Furthermore, the KDF used in TLS 1.2 might be the same KDF used by the importer
+mechanism itself.
 
-Note, also, that endpoints can conceivably construct a non-imported PSK identity that
-conflicts with an imported PSK identity, albeit with a different PSK. In such cases, the
-key schedule changes in {{binder}} will cause connections to fail if client and server
-disagree on whether or not the PSK was imported.
+In deployments that already have PSKs provisioned and in use with TLS 1.2, attempting
+to incrementally deploy the importer mechanism would then result in concurrent use of
+the already provisioned PSK both directly as a TLS 1.2 PSK and as an EPSK, which in
+turn could mean that the same KDF and key would be used in two different protocol contexts.
+There are no known related outputs or security issues that would arise from this arrangement.
+However, only limited analysis has been done, and as such is not a recommended configuration.
+
+However, the benefits of using TLS 1.3 and of using PSK importers may prove sufficiently
+compelling that existing deployments choose to enable this noncompliant configuration for
+a brief transition period while new software (using TLS 1.3 and importers) is deployed.
+Operators are advised to make any such transition period as short as possible.
 
 # Security Considerations
 
@@ -311,10 +316,10 @@ Import interface described in this document aims to achieve the following goals:
 
 There are no known related outputs or security issues caused from the process
 for computing Imported PSKs from an external PSK and the processing of existing
-external PSKs used in (D)TLS 1.2 and below. However, only limited analysis has
-been done, which is an additional reason why applications SHOULD provision separate
-PSKs for (D)TLS 1.3 and prior versions, even when the importer interface is used
-in (D)TLS 1.3.
+external PSKs used in (D)TLS 1.2 and below, as noted in {{rollout}}. However,
+only limited analysis has been done, which is an additional reason why applications
+SHOULD provision separate PSKs for (D)TLS 1.3 and prior versions, even when the
+importer interface is used in (D)TLS 1.3.
 
 The PSK Importer does not prevent applications from constructing non-importer PSK identities
 that collide with imported PSK identities.
@@ -327,7 +332,7 @@ persistent tracking identifier.
 
 Note also that ImportedIdentity.context is visible in cleartext on the wire as part of
 the PSK identity. Unless otherwise protected by a mechanism such as TLS Encrypted
-ClientHello {{?I-D.ietf-tls-esni}}, applications SHOULD not put sensitive information
+ClientHello {{?ECH=I-D.ietf-tls-esni}}, applications SHOULD not put sensitive information
 in this field.
 
 # IANA Considerations {#IANA}
@@ -359,8 +364,8 @@ The authors thank Eric Rescorla and Martin Thomson for discussions that led to t
 production of this document, as well as Christian Huitema for input regarding privacy
 considerations of external PSKs. John Mattsson provided input regarding PSK importer
 deployment considerations. Hugo Krawczyk provided guidance for the security considerations.
-Martin Thomson, Jonathan Hoyland, Scott Hollenbeck and others all provided reviews,
-feedback, and suggestions for improving the document.
+Martin Thomson, Jonathan Hoyland, Scott Hollenbeck, Benjamin Kaduk, and others all
+provided reviews, feedback, and suggestions for improving the document.
 
 # Addressing Selfie {#mitigate-selfie}
 
