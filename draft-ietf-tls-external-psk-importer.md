@@ -213,7 +213,7 @@ specification to make clear how target KDFs are determined for the import proces
 EPSKs MAY be imported before the start of a connection if the target KDFs, protocols, and
 context string(s) are known a priori. EPSKs MAY also be imported for early data use
 if they are bound to the protocol settings and configuration that are required for
-sending early data. Minimally, that means Application-Layer Protocol Negotiation
+sending early data. Minimally, that means Application-Layer Protocol Negotiation value
 {{?RFC7301}}, QUIC transport parameters (if used for QUIC), and any other relevant
 parameters that are negotiated for early data MUST be provisioned alongside these EPSKs.
 
