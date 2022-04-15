@@ -399,7 +399,7 @@ Table of Contents
    Note also that ImportedIdentity.context is visible in cleartext on
    the wire as part of the PSK identity.  Unless otherwise protected by
    a mechanism such as TLS Encrypted ClientHello [ECH], applications
-   SHOULD not put sensitive information in this field.
+   SHOULD NOT put sensitive information in this field.
 
 9.  IANA Considerations
 
