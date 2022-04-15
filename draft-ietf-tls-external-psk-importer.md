@@ -97,12 +97,12 @@ when, and only when, they appear in all capitals, as shown here.
 
 # Overview
 
-The PSK Importer interface mirrors that of the TLS Exporters interface in that
-it diversifies a key based on some contextual information. In contrast to the Exporters
+The PSK Importer interface mirrors that of the TLS Exporters interface (see {{Section 7.5 of RFC8446}})
+in that it diversifies a key based on some contextual information. In contrast to the Exporters
 interface, wherein differentiation is done via an explicit label and context string,
 the PSK Importer interface defined herein takes an external PSK and identity and
 "imports" it into TLS, creating a set of "derived" PSKs and identities. Each of these
-derived PSKs are bound a target protocol, KDF identifier, and optional context string.
+derived PSKs are bound to a target protocol, KDF identifier, and optional context string.
 Additionally, the resulting PSK binder keys are modified with a new derivation label
 to prevent confusion with non-imported PSKs. Through this interface, importing external
 PSKs with different identities yields distinct PSK binder keys.
@@ -123,8 +123,8 @@ more discussion.
 
 The following terms are used throughout this document:
 
-- External PSK (EPSK): A PSK established or provisioned out-of-band, i.e., not from a TLS
-  connection, which is a tuple of (Base Key, External Identity, Hash).
+- External PSK (EPSK): A PSK established or provisioned out-of-band (i.e., not from a TLS
+  connection) which is a tuple of (Base Key, External Identity, Hash).
 - Base Key: The secret value of an EPSK.
 - External Identity: A sequence of bytes used to identify an EPSK.
 - Target protocol: The protocol for which a PSK is imported for use.
@@ -165,16 +165,15 @@ deployment.
 ImportedIdentity.context MUST include the context used to determine the EPSK, if any exists.
 For example, ImportedIdentity.context may include information about peer roles or identities
 to mitigate Selfie-style reflection attacks {{Selfie}}. See {{mitigate-selfie}} for more details.
-If the EPSK is a key derived from some other protocol or sequence of protocols,
+Since the EPSK is a key derived from an external protocol or sequence of protocols,
 ImportedIdentity.context MUST include a channel binding for the deriving protocols
 {{!RFC5056}}. The details of this binding are protocol specific and out of scope for
 this document.
 
 ImportedIdentity.target_protocol MUST be the (D)TLS protocol version for which the
 PSK is being imported. For example, TLS 1.3 {{!RFC8446}} uses 0x0304, which will
-therefore also be used by QUICv1 {{?QUIC=I-D.ietf-quic-transport}}. Note that this
-means future versions of TLS will increase the number of PSKs derived from an external
-PSK.
+therefore also be used by QUICv1 {{?QUIC=RFC9000}}. Note that this means the number
+of PSKs derived from an EPSK is a function of the number of target protocols.
 
 Given an ImportedIdentity and corresponding EPSK with base key `epsk`, an Imported PSK
 IPSK with base key `ipskx` is computed as follows:
@@ -196,8 +195,8 @@ The identity of `ipskx` as sent on the wire is ImportedIdentity, i.e., the seria
 of ImportedIdentity is used as the content of PskIdentity.identity in the PSK extension.
 The corresponding PSK input for the TLS 1.3 key schedule is 'ipskx'.
 
-As the maximum size of the PSK extension is 2^16 - 1 octets, an Imported Identity that exceeds 
-this size is likely to cause a decoding error. Therefore, the PSK Importer interface SHOULD reject 
+As the maximum size of the PSK extension is 2^16 - 1 octets, an Imported Identity that exceeds
+this size is likely to cause a decoding error. Therefore, the PSK Importer interface SHOULD reject
 any ImportedIdentity that exceeds this size.
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
@@ -217,7 +216,7 @@ specification to make clear how target KDFs are determined for the import proces
 EPSKs MAY be imported before the start of a connection if the target KDFs, protocols, and
 context string(s) are known a priori. EPSKs MAY also be imported for early data use
 if they are bound to the protocol settings and configuration that are required for
-sending early data. Minimally, that means Application-Layer Protocol Negotiation value
+sending early data. Minimally, this means that the Application-Layer Protocol Negotiation value
 {{?RFC7301}}, QUIC transport parameters (if used for QUIC), and any other relevant
 parameters that are negotiated for early data MUST be provisioned alongside these EPSKs.
 
@@ -262,7 +261,7 @@ other key.
 
 # Deprecating Hash Functions
 
-If a client or server wish to deprecate a hash function and no longer use it for TLS 1.3,
+If a client or server wishes to deprecate a hash function and no longer use it for TLS 1.3,
 they remove the corresponding KDF from the set of target KDFs used for importing keys.
 This does not affect the KDF operation used to derive Imported PSKs.
 
@@ -331,9 +330,9 @@ that collide with imported PSK identities.
 
 # Privacy Considerations
 
-External PSK identities are typically static by design so that endpoints may use them to
-lookup keying material. However, for some systems and use cases, this identity may become a
-persistent tracking identifier.
+External PSK identities are commonly static by design so that endpoints may use them to
+lookup keying material. As a result, for some systems and use cases, this identity
+may become a persistent tracking identifier.
 
 Note also that ImportedIdentity.context is visible in cleartext on the wire as part of
 the PSK identity. Unless otherwise protected by a mechanism such as TLS Encrypted
