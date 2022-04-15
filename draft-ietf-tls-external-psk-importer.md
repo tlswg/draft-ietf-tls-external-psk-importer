@@ -336,7 +336,7 @@ may become a persistent tracking identifier.
 
 Note also that ImportedIdentity.context is visible in cleartext on the wire as part of
 the PSK identity. Unless otherwise protected by a mechanism such as TLS Encrypted
-ClientHello {{?ECH=I-D.ietf-tls-esni}}, applications SHOULD not put sensitive information
+ClientHello {{?ECH=I-D.ietf-tls-esni}}, applications SHOULD NOT put sensitive information
 in this field.
 
 # IANA Considerations {#IANA}
