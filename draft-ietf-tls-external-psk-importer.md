@@ -72,7 +72,7 @@ This was done to simplify protocol analysis. TLS 1.2 {{?RFC5246}}, in contrast,
 has no such requirement, as a PSK may be used with any hash algorithm and the
 TLS 1.2 pseudorandom function (PRF). While there is no known way in which the same
 external PSK might produce related output in TLS 1.3 and prior versions, only limited
-analysis has been done. Applications SHOULD provision separate PSKs for TLS 1.3 and
+analysis has been done. Applications SHOULD provision separate PSKs for (D)TLS 1.3 and
 prior versions. In cases where this is not possible, e.g., there are already deployed
 external PSKs or provisioning is otherwise limited, re-using external PSKs across different
 versions of TLS may produce related outputs, which may in turn lead to security problems;
@@ -81,9 +81,9 @@ see {{!RFC8446}}, Section E.7.
 To mitigate against such problems, this document specifies a PSK Importer
 interface by which external PSKs may be imported and subsequently bound to a specific
 key derivation function (KDF) and hash function for use in TLS 1.3 {{!RFC8446}}
-and DTLS 1.3 {{!DTLS13=I-D.ietf-tls-dtls13}}. In particular,
-it describes a mechanism for differentiating external PSKs by the target KDF, (D)TLS
-protocol version, and an optional context string. This process yields a set of candidate
+and DTLS 1.3 {{!DTLS13=I-D.ietf-tls-dtls13}}. In particular, it describes a
+mechanism for importing PSKs derived from external PSKs by including the target KDF,
+(D)TLS protocol version, and an optional context string to ensure uniqueness. This process yields a set of candidate
 PSKs, each of which are bound to a target KDF and protocol, that are separate from those
 used in (D)TLS 1.2 and prior versions. This expands what would normally have been a single
 PSK and identity into a set of PSKs and identities.
@@ -95,13 +95,30 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
 document are to be interpreted as described in BCP 14 {{RFC2119}} {{!RFC8174}}
 when, and only when, they appear in all capitals, as shown here.
 
+# Terminology {#terminology}
+
+The following terms are used throughout this document:
+
+- External PSK (EPSK): A PSK established or provisioned out-of-band (i.e., not
+  from a TLS connection) which is a tuple of (Base Key, External Identity, Hash).
+- Base Key: The secret value of an EPSK.
+- External Identity: A sequence of bytes used to identify an EPSK.
+- Target protocol: The protocol for which a PSK is imported for use.
+- Target KDF: The KDF for which a PSK is imported for use.
+- Imported PSK (IPSK): A TLS PSK derived from an EPSK, optional context string,
+  target protocol, and target KDF.
+- Non-imported PSK: An EPSK which used directly as a TLS PSK without being imported.
+- Imported Identity: A sequence of bytes used to identify an IPSK.
+
+This document uses presentation language from {{RFC8446}}, Section 3.
+
 # Overview
 
 The PSK Importer interface mirrors that of the TLS Exporters interface (see {{Section 7.5 of RFC8446}})
 in that it diversifies a key based on some contextual information. In contrast to the Exporters
-interface, wherein differentiation is done via an explicit label and context string,
-the PSK Importer interface defined herein takes an external PSK and identity and
-"imports" it into TLS, creating a set of "derived" PSKs and identities. Each of these
+interface, wherein output uniqueness is achieved via an explicit label and context string,
+the PSK Importer interface defined herein takes an external PSK and identity and "imports" it into
+TLS, creating a set of "derived" PSKs and identities that are each unique. Each of these
 derived PSKs are bound to a target protocol, KDF identifier, and optional context string.
 Additionally, the resulting PSK binder keys are modified with a new derivation label
 to prevent confusion with non-imported PSKs. Through this interface, importing external
@@ -109,8 +126,8 @@ PSKs with different identities yields distinct PSK binder keys.
 
 Imported keys do not require negotiation for use since a client and server will not agree upon
 identities if imported incorrectly. Endpoints may incrementally deploy PSK Importer support
-by offering non-imported keys for TLS versions prior to TLS 1.3. Non-imported and imported PSKs
-are distinct since their identities are different on the wire. See {{rollout}} for more details.
+by offering non-imported PSKs for TLS versions prior to TLS 1.3. Non-imported and imported PSKs
+are distinct since their identities are different. See {{rollout}} for more details.
 
 Endpoints which import external keys MUST NOT use the keys that are input to the
 import process for any purpose other than the importer, and MUST NOT use the derived
@@ -118,22 +135,6 @@ keys for any purpose other than TLS PSKs. Moreover, each external PSK fed to the
 importer process MUST be associated with at most one hash function.  This
 is analogous to the rules in Section 4.2.11 of {{!RFC8446}}. See {{security-considerations}} for
 more discussion.
-
-## Terminology {#terminology}
-
-The following terms are used throughout this document:
-
-- External PSK (EPSK): A PSK established or provisioned out-of-band (i.e., not from a TLS
-  connection) which is a tuple of (Base Key, External Identity, Hash).
-- Base Key: The secret value of an EPSK.
-- External Identity: A sequence of bytes used to identify an EPSK.
-- Target protocol: The protocol for which a PSK is imported for use.
-- Target KDF: The KDF for which a PSK is imported for use.
-- Imported PSK (IPSK): A PSK derived from an EPSK, optional context string,
-  target protocol, and target KDF.
-- Imported Identity: A sequence of bytes used to identify an IPSK.
-
-This document uses presentation language from {{RFC8446}}, Section 3.
 
 # PSK Import
 
@@ -158,9 +159,9 @@ struct {
 ~~~
 
 The list of ImportedIdentity.target_kdf values is maintained by IANA as described in {{IANA}}.
-External PSKs MUST NOT be imported for (D)TLS 1.2 or prior versions. See {{rollout}} for discussion on
-how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions co-exist for incremental
-deployment.
+External PSKs MUST NOT be imported for (D)TLS 1.2 or prior versions. See {{rollout}} for
+discussion on how imported PSKs for TLS 1.3 and non-imported PSKs for earlier versions
+co-exist for incremental deployment.
 
 ImportedIdentity.context MUST include the context used to determine the EPSK, if any exists.
 For example, ImportedIdentity.context may include information about peer roles or identities
@@ -200,8 +201,9 @@ this size is likely to cause a decoding error. Therefore, the PSK Importer inter
 any ImportedIdentity that exceeds this size.
 
 The hash function used for HKDF {{!RFC5869}} is that which is associated with the EPSK.
-It is not the hash function associated with ImportedIdentity.target_kdf. If no hash function
-is specified, SHA-256 {{SHA2}} SHOULD be used. Diversifying EPSK by ImportedIdentity.target_kdf ensures
+It is not the hash function associated with ImportedIdentity.target_kdf. If the EPSK
+does not have such an associated hash function, SHA-256 {{SHA2}} SHOULD be used.
+Diversifying EPSK by ImportedIdentity.target_kdf ensures
 that an IPSK is only used as input keying material to at most one KDF, thus satisfying
 the requirements in {{!RFC8446}}. See {{security-considerations}} for more details.
 
@@ -267,23 +269,11 @@ This does not affect the KDF operation used to derive Imported PSKs.
 
 # Incremental Deployment {#rollout}
 
-The mechanism defined in this document requires that an EPSK is only ever used as an
-EPSK and not for any other purpose. In particular, this requirement disallows direct
-use of the EPSK as a PSK in TLS 1.2. The importer process produces distinct IPSKs
-derived from the target protocol and KDF, which in turn protects against cross-protocol
-collisions for protocol versions using this process by ensuring that each IPSK can only
-be used with one protocol and KDF. This is a distinct contrast to TLS 1.2, where a given
-PSK might be used with multiple KDFs in different handshakes, and importers are not
-available. Furthermore, the KDF used in TLS 1.2 might be the same KDF used by the importer
-mechanism itself.
-
 In deployments that already have PSKs provisioned and in use with TLS 1.2, attempting
 to incrementally deploy the importer mechanism would then result in concurrent use of
 the already provisioned PSK both directly as a TLS 1.2 PSK and as an EPSK, which in
 turn could mean that the same KDF and key would be used in two different protocol contexts.
-There are no known related outputs or security issues that would arise from this arrangement.
-However, only limited analysis has been done, and as such is not a recommended configuration.
-
+This is not a recommended configuration; see {{security-considerations}} for more details.
 However, the benefits of using TLS 1.3 and of using PSK importers may prove sufficiently
 compelling that existing deployments choose to enable this noncompliant configuration for
 a brief transition period while new software (using TLS 1.3 and importers) is deployed.
