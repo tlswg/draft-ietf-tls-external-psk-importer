@@ -114,7 +114,7 @@ This document uses presentation language from {{RFC8446}}, Section 3.
 
 # Overview
 
-The PSK Importer interface mirrors that of the TLS Exporters interface (see {{Section 7.5 of RFC8446}})
+The PSK Importer interface mirrors that of the TLS Exporters interface (see {{RFC8446, Section 7.5}})
 in that it diversifies a key based on some contextual information. In contrast to the Exporters
 interface, wherein output uniqueness is achieved via an explicit label and context string,
 the PSK Importer interface defined herein takes an external PSK and identity and "imports" it into
