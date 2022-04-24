@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2022-03-08T00:20:08.775713+00:00",
+  "timestamp": "2022-04-24T00:24:10.665154+00:00",
   "repo": "tlswg/draft-ietf-tls-external-psk-importer",
   "labels": [
     {
@@ -4347,6 +4347,48 @@
           "body": "",
           "createdAt": "2021-10-25T21:48:47Z",
           "updatedAt": "2021-10-25T21:48:47Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 45,
+      "id": "PR_kwDOCH3yJc42U9O7",
+      "title": "Address ISRG and additional area reviews",
+      "url": "https://github.com/tlswg/draft-ietf-tls-external-psk-importer/pull/45",
+      "state": "MERGED",
+      "author": "chris-wood",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "cc @letoams, @davidben ",
+      "createdAt": "2022-04-17T13:31:25Z",
+      "updatedAt": "2022-04-22T15:17:13Z",
+      "baseRepository": "tlswg/draft-ietf-tls-external-psk-importer",
+      "baseRefName": "master",
+      "baseRefOid": "ebc99b5da245e4485c43a145444011bc3af603ca",
+      "headRepository": "tlswg/draft-ietf-tls-external-psk-importer",
+      "headRefName": "caw/paul-review",
+      "headRefOid": "854f530ea52a4f1161f1e9b97b684f870e67827c",
+      "closedAt": "2022-04-22T15:17:12Z",
+      "mergedAt": "2022-04-22T15:17:12Z",
+      "mergedBy": "chris-wood",
+      "mergeCommit": {
+        "oid": "43075caa96d6fccdf9f8ff47142644d34da2a134"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOCH3yJc44j4Df",
+          "commit": {
+            "abbreviatedOid": "854f530"
+          },
+          "author": "seanturner",
+          "authorAssociation": "NONE",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2022-04-21T16:53:23Z",
+          "updatedAt": "2022-04-21T16:53:23Z",
           "comments": []
         }
       ]
